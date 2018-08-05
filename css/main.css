@@ -1,0 +1,601 @@
+/*
+Template Name: Gorgo
+Author: Levent Usta
+Author URI: http://www.aristotheme.com
+Description: A template by Aristotheme.
+*/
+
+/*=================================*/
+/*  Table of Contents
+/*  - Reset & Clearfix Styles
+/*  - Main Styles
+/*      - Titles
+/*      - Navigation Styles
+/*      - Projects Feed
+/*          - Project Assets
+/*          - Project Content
+/*          - Paginations
+/*  - News
+/*  - Structure
+/*  - Grid
+/*  - Footer Styles
+/*  - Media Queries
+
+
+/*=================================*/
+
+/*=================================*/
+/* Reset & Clearfix Styles
+/*=================================*/
+
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td { margin: 0; padding: 0; border: 0; outline: 0; font-size: 100%; vertical-align: baseline; background: transparent; } body { line-height: 1; } ol, ul { list-style: none; } blockquote, q { quotes: none; } blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; } :focus { outline: 0; } ins { text-decoration: none; } del { text-decoration: line-through; } table { border-collapse: collapse; border-spacing: 0; }
+
+
+/*=================================*/
+/* Main Styles
+/*=================================*/
+
+* { box-sizing: border-box; }
+html {
+    font-family: sans-serif; /* 1 */
+    -ms-text-size-adjust: 100%; /* 2 */
+    -webkit-text-size-adjust: 100%; /* 2 */
+}
+body {
+    background: #FFFFFF;
+    color: #2c2c2c;
+    font-family: 'quicksand', Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.65;
+    opacity: 0;
+    overflow-x: hidden;
+    transition: opacity 0.25s ease-in 0.1s;
+    word-wrap: break-word;
+    -webkit-text-size-adjust: none;
+}
+body.loaded,
+.no-js body {
+    opacity: 1;
+}
+a, a:visited {
+    color: #442414;
+    text-decoration: none;
+    transition: color 0.1s ease-in-out;
+}
+a:hover, a:active {
+    color: #2c2c2c;
+    text-decoration: none;
+}
+
+h1,h2,h3 {
+    font-weight: bold;
+    line-height: 1.5;
+}
+h1 {
+    font-size: 2.2rem;
+    letter-spacing: -1px;
+    margin: 0 0 40px; 
+}
+
+h2 {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+h3 {
+    font-size: 1.4rem;
+}
+
+h4 {
+    font-size: 1.2rem;
+}
+
+h5 {
+    font-size: 1rem;
+}
+
+h6 {
+    font-size: .8rem;
+}
+
+h3,
+h4,
+h5,
+h6 {
+    text-transform: uppercase;
+    margin: 0 0 10px;
+}
+h4,
+h5,
+h6 {
+   font-weight: normal;
+}
+p,li {
+    font-weight: 400;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    margin: 0 0 20px;
+}
+small {
+    font-weight: 300;
+    font-size: 1rem;
+    color: #747474
+}
+img {
+    height: auto;
+    max-width: 100%;
+    vertical-align: bottom;
+}
+
+
+/*===== Titles =====*/
+.site-title {
+    font-family: 'Righteous',helvetica,sans-serif;
+    font-size: 26px;
+    color: #90D4C5;
+    line-height: 1.5em;
+    position: relative;
+    z-index: 12;
+    letter-spacing: 4px;
+    margin-bottom: 120px;
+}
+.site-title a {
+    position: fixed;
+}
+.site-title a,
+.site-title a:visited { color: #90D4C5; }
+.site-title a:hover,
+.site-title a:active {
+    color: #90D4C5;
+    opacity: 0.8;
+}
+.site-title div { display: inline; }
+.site-tagline {
+    clear: both;
+    /*margin-bottom: 40px;*/
+    width: 100%;
+}
+
+.site-tagline div
+{
+    width: 220px;
+    height: 220px;
+    position: relative;
+}
+
+.site-tagline div img
+{
+    height: 220px;
+    margin-bottom: 30px;
+    position: absolute;
+}
+
+.site-tagline div img#back
+{
+    height: 218px;
+    margin-top: 1px;
+}
+
+.site-tagline p {
+    color: #442414;
+    font-size: 21px;
+    text-align: left;
+    width: 90%;
+}
+
+.site-tagline u
+{
+    text-decoration: none;
+    border-bottom: 3px solid #442414;
+}
+
+.site-tagline a
+{
+    font-weight: 600;
+}
+
+.site-tagline a:hover {
+    color: #442414;
+}
+
+.site-tagline a:visited u
+{
+    text-decoration: none;
+}
+
+strong
+{
+    color:#dd3f24;
+    font-size: 30px;
+}
+
+/*===== Grid system =====*/
+#container
+{
+  width: 100%;
+  height: auto !important;
+  clear: both;
+}
+
+/*===== Footer =====*/
+.site-footer { padding: 40px 200px;}
+
+/*=================================*/
+/* Structure
+/*=================================*/
+
+.site-container {
+    margin: 0 auto;
+}
+.site-header,
+
+.site-footer { padding: 40px 20px; }
+.right {
+    float: right;
+    margin: 0px 0px 40px 40px ;
+}
+.left {
+    float: left;
+    margin: 0px 40px 40px 0px ;
+}
+
+
+/*=================================*/
+/* Footer Styles
+/*=================================*/
+.site-footer 
+{
+    text-align: center;
+}
+
+.site-footer p
+{
+    color: #2c2c2c;
+    font-family: 'quicksand', Arial, sans-serif;
+    text-align: center;
+    width: 100%;
+    margin: 0;
+    font-size: 13px;
+}
+
+.site-footer a,
+.site-footer a:visited { color: #2c2c2c; }
+.site-footer a:hover { color: #90D4C5; }
+
+.site-footer ul
+{
+    width: 100%;
+    margin: 0 auto 15px auto;
+    display: block;
+
+}
+.site-footer ul li
+{
+    display: inline-block;
+    margin: 0 20px 0 20px;
+} 
+
+.site-footer ul li img
+{
+    height: 25px;
+}
+
+/*=================================*/
+/* Media Queries
+/*=================================*/
+
+
+@media only screen and (min-width: 401px) {
+
+    /*===== Titles =====*/
+    .site-tagline p { 
+        font-size: 20px;
+    }
+
+    strong
+    {
+        font-size: 30px;
+    }
+
+.image_grid li
+    {
+        width: 100%;
+    }   
+    h3 {
+        font-size: 2.3rem;
+    }
+
+    /*===== Navigations =====*/
+    .cd-nav-trigger {
+        top: 34px;
+        right: 40px;
+    }
+    .cd-nav .cd-navigation-wrapper {
+        padding: 40px;
+    }
+
+    /*===== Footer =====*/
+    .site-footer { padding: 40px }
+
+}
+
+@media only screen and (min-width: 600px) {
+
+    /*===== Structures =====*/
+    .site-header,
+    .page-desc {
+        padding: 60px;
+    }
+    .page-desc {
+        width: 75%;
+    }
+    .page-desc h1,
+    .page-desc h2,
+    .page-desc h3{
+        font-size: 2.8rem;
+    }
+    
+    .site-tagline {
+        /*margin-bottom: 60px;*/
+    }
+    .site-tagline p { 
+        font-size: 25px;
+    }
+    
+    strong
+    {
+        font-size: 35px;
+    }
+    .image_grid li
+    {
+        width: 50%;
+    }   
+    h3 {
+        font-size: 2.3rem;
+    }
+    /*===== Navigations =====*/
+    .cd-nav-trigger {
+        top: 52px;
+        right: 60px;
+    }
+    .cd-nav .cd-navigation-wrapper {
+        padding: 60px 59px 60px calc(1px + 59px);
+    }
+    .cd-nav .cd-navigation-wrapper::after {
+        clear: both;
+        content: "";
+        display: table;
+    }
+    .cd-nav .cd-half-block {
+        width: 50%;
+        float: left;
+    }
+    .cd-nav .cd-primary-nav {
+        margin-top: 160px;
+    }
+    .cd-nav .cd-primary-nav a {
+        font-size: 36px;
+    }
+    .cd-nav .cd-contact-info {
+        margin-top: 160px;
+        margin-bottom: 80px;
+        text-align: right;
+    }
+    .cd-nav .cd-contact-info li {
+        margin-bottom: 2em;
+    }
+    .cd-nav .cd-contact-socials {
+        text-align: right;
+    }
+    /*===== Blog =====*/
+    .blog_item h1 {
+        font-size: 2rem;
+        width: 75%;
+    }
+    .blog_item h5 {
+        font-size: 0.8rem;
+    }
+    .blog_item {
+        padding: 100px 50px;
+    }
+    /*===== Footer =====*/
+    .site-footer { padding: 40px 60px; }
+
+
+}
+
+@media only screen and (min-width: 801px) {
+
+    /*===== Structures =====*/
+    .site-header,
+    .page-desc {
+        padding: 80px;
+    }
+
+    .site-tagline {
+        /*margin-bottom: 100px;*/
+        width: 90%;
+    }
+
+    .site-tagline p { 
+        font-size: 30px;
+    }
+
+    .image_grid li
+    {
+        width: 33.3%;
+    }   
+
+    h3 {
+        font-size: 2.3rem;
+    }
+    /*===== Navigations =====*/
+    .cd-nav-trigger {
+        top: 74px;
+        right: 80px;
+    }
+    .cd-nav .cd-navigation-wrapper {
+        padding: 60px 79px 60px calc(1px + 79px);
+    }
+    .cd-nav .cd-primary-nav a {
+        font-size: 42px;
+    }
+    .cd-nav .cd-contact-info li, 
+    .cd-nav .cd-contact-info a, 
+    .cd-nav .cd-contact-info span {
+        font-size: 21px;
+    }
+    /*===== Footer =====*/
+    .site-footer { padding: 40px 80px; }
+    .footer-text { float: left; }
+    .footer-misc { float: right; }
+
+    /*===== Grid =====*/
+    .large-1 {
+      width: 100%;
+    }
+
+    .large-1:nth-child(1n) {
+      float: left;
+    }
+
+    .large-1:last-child {
+      float: right;
+    }
+
+    .large-2 {
+      width: 40%;
+    }
+
+    .large-2:nth-child(1n) {
+      float: left;
+    }
+
+    .large-2:last-child {
+      float: right;
+    }
+
+    .large-3 {
+      width: 30%;
+    }
+
+    .large-3:nth-child(1n) {
+      float: left;
+    }
+
+    .large-3:last-child {
+      float: right;
+    }
+
+    .large-4 {
+      width: 20%;
+    }
+
+    .large-4:nth-child(1n) {
+      float: left;
+    }
+
+    .large-4:last-child {
+      float: right;
+    }
+
+    
+}
+
+@media only screen and (min-width: 1200px) {
+
+    /*===== Structures =====*/
+    .site-header,
+    .page-desc {
+        padding: 170px 200px 100px 200px;
+        /*上右左下*/
+    }
+    
+    .site-tagline {
+        /*margin-bottom: 100px;*/
+        width: 90%;
+    }
+    .site-tagline p { 
+        font-size: 35px;
+    }
+    strong
+    {
+        font-size: 45px;
+    }
+
+    .image_grid li
+    {
+        width: 25%;
+    }   
+
+    .site-tagline h1 { 
+        font-size: 3.2rem;
+    }
+    .site-tagline h5 { 
+        font-size: 1.4rem;
+    }
+    /*===== Navigations =====*/
+    .cd-nav-trigger {
+        top: 94px;
+        right: 140px;
+    }
+    .cd-nav .cd-navigation-wrapper {
+        padding: 60px 140px 60px calc(58px + 140px);
+    }
+    .cd-nav .cd-primary-nav a {
+        font-size: 54px;
+    }
+    .cd-nav .cd-contact-info li, 
+    .cd-nav .cd-contact-info a, 
+    .cd-nav .cd-contact-info span {
+        font-size: 24px;
+    }
+
+    /*===== Paginations =====*/
+
+    /*===== Blog =====*/
+    .blog_item h1 {
+        width: 75%;
+        font-size: 3.2rem;
+    }
+    .blog_item{
+        padding: 200px;
+    }
+    .blog_item h5 {
+        font-size: 1rem;
+    }
+    /*===== Main Styles =====*/
+    h1 {
+        font-size: 3.2rem;
+    }
+
+    h2 {
+        font-size: 2.6rem;
+    }
+
+    h3 {
+        font-size: 2.3rem;
+    }
+
+    h4 {
+        font-size: 1.8rem;
+    }
+
+    h5 {
+        font-size: 1.4rem;
+    }
+
+    h6 {
+        font-size: 1rem;
+    }
+
+}
+
+
+.my-name
+{
+    float: left;
+    overflow: hidden;
+    display: block;
+    position: relative;
+}

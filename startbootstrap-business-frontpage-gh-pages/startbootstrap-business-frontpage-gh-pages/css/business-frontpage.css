@@ -1,0 +1,107 @@
+/*
+ * Start Bootstrap - Business Frontpage (http://startbootstrap.com/)
+ * Copyright 2013-2016 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
+ */
+
+body {
+    padding-top: 50px; /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+    font-family: 'Open Sans', Arial, sans-serif;
+    color: #41352e;
+}
+
+.content-container {
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+@media (min-width: 768px) {
+  .content-container {
+    width: 750px;
+  }
+}
+@media (min-width: 992px) {
+  .content-container {
+    width: 970px;
+  }
+}
+@media (min-width: 1200px) {
+  .content-container {
+    width: 920px;
+  }
+}
+/* Header Image Background - Change the URL below to your image path (example: ../images/background.jpg) */
+
+/* Customize the text color and shadow color and to optimize text legibility. */
+
+.tagline {
+    text-shadow: 0 0 10px #000;
+    color: #fff;
+}
+
+/*-----------title & detials-----------------*/
+.row .project-title, .project-type b, .chapter-name
+{
+    font-family: 'Ubuntu', Arial, sans-serif;
+}
+
+
+.row .project-title
+{
+    vertical-align: bottom; 
+    height: 195px;
+    position: relative;
+}
+
+.project-title span
+{
+    font-size: 90px;
+    font-weight: 900;
+}
+
+.project-title h2
+{
+    position: absolute;
+    bottom: 0;
+    font-size: 20px;
+}
+
+.row .project-type
+{
+    line-height: 21px;
+    /*vertical-align: bottom;*/
+    /*display: inline-block;*/
+}
+
+.row .project-type p
+{
+    margin: 0;
+}
+
+/*-----------project content-----------------*/
+.row .chapter-name
+{
+    font-weight: 700;
+    margin:0;
+    font-size: 20px;
+}
+
+.row .para
+{
+    font-size: 14px;
+    line-height: 26px;
+}
+
+.row img
+{
+    width: 100%;
+}
+
+.img-center {
+    margin: 0 auto;
+}
+
+footer {
+    margin: 50px 0;
+}

@@ -1,0 +1,448 @@
+/*
+ * Start Bootstrap - Business Frontpage (http://startbootstrap.com/)
+ * Copyright 2013-2016 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
+ */
+
+
+
+/*------------by seeta--------------*/
+
+/*structre*/
+
+/*---basic for pages*/
+/*---navigation*/
+/*---project title and detials-----*/
+/*---basic for rows*/
+/*-----------basic for project------------*/
+/*-----------project EL------------*/
+
+
+/*---basic for pages*/
+body {
+    /*padding-top: 50px;  Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+    font-family: 'Open Sans', Arial, sans-serif;
+    color: #41352e;
+    padding: 0;
+}
+
+h2
+{
+  margin: 0;
+}
+
+.col-sm-12
+{
+  margin-bottom: 10px;
+}
+
+nav .content-container
+{
+  padding-top: 80px;
+}
+
+/*body>.content-container,
+#project-overview,
+{
+  padding-top: 100px;
+}*/
+
+.content-container,
+#project-overview
+{
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/*---------nagivation-------------*/
+.navbar-inverse .navbar-nav>li>a
+{
+  color: #41352e;
+  font-size: 12px;
+}
+
+.navbar-inverse .navbar-nav>li>a:hover
+{
+  color: #dd3f24;
+}
+
+.navbar-inverse .navbar-collapse, .navbar-inverse .navbar-toggle
+{
+  border: none;
+}
+
+.navbar-inverse .navbar-toggle
+{
+  background-color: #41352e;
+}
+
+.navbar-inverse .navbar-toggle:hover
+{
+  background-color: #dd3f24;
+}
+
+iframe
+{
+  height: 300px;
+}
+
+#project-movalue iframe
+  {
+    height: 550px;
+    width: 90%;
+    margin-left: 5%;
+  }
+
+
+@media only screen and (min-width: 768px) {
+  .content-container,
+  hr
+  {
+    width: 750px;
+  }
+  body>.content-container/*,
+  #project-overview*/
+  {
+    padding-top: 200px;
+  }
+
+  iframe
+  {
+    height: 400px;
+  }
+
+  #project-movalue iframe
+  {
+    height: 650px;
+    width: 50%;
+    margin-left: 25%;
+  }
+
+}
+@media only screen and (min-width: 992px) {
+  .content-container,
+  #project-overview,
+  hr
+   {
+    width: 920px;
+  }
+
+  iframe
+  {
+    height: 500px;
+  }
+
+  #project-movalue iframe
+  {
+    height: 650px;
+    width: 50%;
+    margin-left: 25%;
+  }
+
+}
+@media only screen and (min-width: 1200px) {
+  .content-container,
+  #project-overview,
+  hr
+  {
+    width: 920px;
+  }
+
+  iframe
+  {
+    height: 500px;
+  }
+
+  #project-movalue iframe
+  {
+    height: 700px;
+    width: 50%;
+    margin-left: 25%;
+  }
+}
+
+.tagline {
+    text-shadow: 0 0 10px #000;
+    color: #fff;
+}
+
+.navbar-inverse
+{
+  background-color: white;
+  border:none;
+}
+
+.navbar-inverse .navbar-brand
+{
+    font-family: 'quicksand', Arial, sans-serif;
+    color: #dd3f24;
+    font-size: 40px;
+    font-weight: 700;
+    padding:0;
+    line-height: 40px;
+    overflow: hidden;
+}
+
+.navbar-inverse .navbar-brand span
+{
+  color: #dd3f24;
+  width: 100px;
+  cursor: pointer;
+  float: left;
+  margin-right: 7px;
+}
+
+
+.navbar-inverse .navbar-brand #lezhi
+{
+  cursor: pointer;
+  display: none;
+}
+
+.navbar-nav
+{
+  float: right;
+}
+
+
+
+/*-----basic rows------*/
+.row
+{
+  margin-right: 0;
+  margin-left: 0;
+  margin-top: 40px;
+}
+
+.space-row
+{
+  height: 20px;
+}
+
+/*-------project title and detials-----*/
+.row .project-title, .project-type b, .chapter-name
+{
+    font-family: 'Ubuntu', Arial, sans-serif;
+}
+
+
+.row .project-title
+{
+    vertical-align: bottom; 
+    height: 195px;
+    position: relative;
+}
+
+.project-title .main-title
+{
+    font-size: 90px;
+    font-weight: 900;
+}
+
+.project-title h2
+{
+    position: absolute;
+    bottom: 0;
+    font-size: 20px;
+}
+
+.row .project-type
+{
+    line-height: 21px;
+}
+
+.row .project-type p
+{
+    margin: 0;
+}
+
+.row .project-type div
+{
+    margin-top: 10px;
+}
+
+
+/*-----------basic for project-----------------*/
+.chapter-name
+{
+    font-weight: 700;
+    margin:0;
+    font-size: 20px;
+}
+
+.row .para
+{
+    font-size: 14px;
+    line-height: 26px;
+}
+
+.note
+{
+  text-align: center;
+  font-weight: 500;
+  opacity: 0.5;
+  font-size: 10px;
+}
+
+
+/*-----------project EL------------*/
+.image-row img
+{
+    width: 100%;
+}
+
+.img-center {
+    margin: 0 auto;
+}
+
+.two-col-row img
+{
+  width: 85%;
+  margin-left: 7.5%;
+}
+
+.three-col-row .col-sm-9 div,
+.three-col-row .col-sm-8 div
+{
+  width: 50%;
+  float: left;
+}
+
+.three-col-row .col-sm-9 div img,
+.three-col-row .col-sm-8 div img,
+.three-col-row .col-sm-4 div img
+{
+  width: 90%;
+  margin-left: 5%;
+  box-sizing: border-box;
+}
+
+.four-col-row .col-sm-3
+{
+  padding-left:0;
+}
+
+.four-col-row .col-sm-3 div img
+{
+  width: 95%;
+  box-sizing: border-box; 
+}
+
+/*-----------project EL------------*/
+#project-data .project-title .main-title,
+#project-heating .project-title .main-title,
+#project-stay .project-title .main-title,
+#project-bush .project-title .main-title,
+#project-harvester .project-title .main-title
+{
+    font-size: 70px;
+    font-weight: 900;
+}
+
+#project-silent .project-title
+{
+  height: 255px;
+}
+
+#project-silent .project-type a, .para a
+{
+  text-decoration: none;
+  color: #dd3f24;
+  cursor: pointer;
+}
+
+
+/*-----------DDW------------*/
+.project-type img
+{
+  height: 30px;
+}
+
+.site-footer 
+{
+  padding: 40px 20px;
+}
+
+
+.site-footer 
+{
+    text-align: center;
+}
+
+.site-footer p
+{
+    color: #2c2c2c;
+    font-family: 'quicksand', Arial, sans-serif;
+    text-align: center;
+    width: 100%;
+    margin: 0;
+    font-size: 13px;
+}
+
+.site-footer a,
+.site-footer a:visited { color: #2c2c2c; }
+.site-footer a:hover { color: #90D4C5; }
+
+.site-footer ul
+{
+    width: 100%;
+    margin: 0 auto 15px auto;
+    display: block;
+    padding: 0;
+}
+.site-footer ul li
+{
+    display: inline-block;
+    margin: 0 20px 0 20px;
+} 
+
+.site-footer ul li img
+{
+    height: 25px;
+}
+
+/*---------project overview--------*/
+#project-overview 
+{ 
+  padding-bottom: 200px;
+  margin: 0 auto;
+}
+
+
+#project-overview ul
+{
+  padding: 0;
+  margin: 0;
+}
+
+
+#project-overview ul li img
+{
+  width: 100%;
+  opacity: 0.3;
+}
+
+#project-overview ul li img:hover
+{
+  opacity: 1;
+  transition: 0.3s linear;
+}
+
+#project-overview ul li a:active img
+{
+  opacity: 1;
+}
+
+hr
+{
+  margin-top: 150px;
+  margin-bottom: 150px;
+}
+
+#slash hr
+{
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
