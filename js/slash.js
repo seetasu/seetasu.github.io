@@ -20,6 +20,27 @@
 $(document).ready(function(){
 	// $('.hidden').hide();
 	// $('.btn-up').hide();
+	$('.malaysia .expand-btn').click(function(){
+		$('.malaysia .article-content .full-text').toggleClass("hidden",1000,"easeOutCubic");
+		$('.malaysia .article-content .preview').toggleClass("hidden",1000,"easeOutCubic");
+		$('.malaysia .expand-btn .btn-up').toggleClass("hidden",1000,"easeOutCubic");
+		$('.malaysia .expand-btn .btn-down').toggleClass("hidden",1000,"easeOutCubic");
+	});
+
+	$('.fish .expand-btn').click(function(){
+		$('.fish .article-content .full-text').toggleClass("hidden",1000,"easeOutCubic");
+		$('.fish .article-content .preview').toggleClass("hidden",1000,"easeOutCubic");
+		$('.fish .expand-btn .btn-up').toggleClass("hidden",1000,"easeOutCubic");
+		$('.fish .expand-btn .btn-down').toggleClass("hidden",1000,"easeOutCubic");
+	});
+
+	$('.iceland .expand-btn').click(function(){
+		$('.iceland .article-content .full-text').toggleClass("hidden",1000,"easeOutCubic");
+		$('.iceland .article-content .preview').toggleClass("hidden",1000,"easeOutCubic");
+		$('.iceland .expand-btn .btn-up').toggleClass("hidden",1000,"easeOutCubic");
+		$('.iceland .expand-btn .btn-down').toggleClass("hidden",1000,"easeOutCubic");
+	});
+
 	$('.flower .expand-btn').click(function(){
 		$('.flower .article-content .full-text').toggleClass("hidden",1000,"easeOutCubic");
 		$('.flower .article-content .preview').toggleClass("hidden",1000,"easeOutCubic");
