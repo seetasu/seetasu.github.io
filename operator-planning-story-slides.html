@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-deck-id="ascend-operator-planning-story-v1" data-mobile-adaptation="desktop-default">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operator Planning｜从理解到开发</title>
+  <link rel="icon" href="data:,">
+  <style>
+    /* === VIEWPORT BASE: full mandatory frontend-slides rules === */
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-height: 100%;
+      overflow: hidden;
+      padding: var(--slide-padding);
+    }
+
+    :root {
+      --title-size: clamp(2rem, 4.45vw, 4.3rem);
+      --h2-size: clamp(1.5rem, 3.25vw, 3.1rem);
+      --h3-size: clamp(1rem, 1.65vw, 1.5rem);
+      --body-size: clamp(0.78rem, 1.2vw, 1.08rem);
+      --small-size: clamp(0.64rem, 0.82vw, 0.82rem);
+      --slide-padding: clamp(1rem, 4vw, 4rem);
+      --content-gap: clamp(0.5rem, 2vw, 2rem);
+      --element-gap: clamp(0.25rem, 1vw, 1rem);
+    }
+
+    .card, .container, .content-box {
+      max-width: min(90vw, 1000px);
+      max-height: min(80vh, 700px);
+    }
+
+    .feature-list, .bullet-list {
+      gap: clamp(0.4rem, 1vh, 1rem);
+    }
+
+    .feature-list li, .bullet-list li {
+      font-size: var(--body-size);
+      line-height: 1.4;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+      gap: clamp(0.5rem, 1.5vw, 1rem);
+    }
+
+    img, .image-container {
+      max-width: 100%;
+      max-height: min(50vh, 400px);
+      object-fit: contain;
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+        --title-size: clamp(1.6rem, 4vw, 3rem);
+        --h2-size: clamp(1.2rem, 2.8vw, 2rem);
+      }
+    }
+
+    @media (max-height: 600px) {
+      :root {
+        --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+        --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+        --title-size: clamp(1.35rem, 3.6vw, 2.35rem);
+        --body-size: clamp(0.7rem, 1vw, 0.9rem);
+      }
+      .nav-dots, .keyboard-hint, .decorative { display: none; }
+    }
+
+    @media (max-height: 500px) {
+      :root {
+        --slide-padding: clamp(0.4rem, 2vw, 1rem);
+        --title-size: clamp(1.1rem, 3.1vw, 1.8rem);
+        --h2-size: clamp(0.9rem, 2.3vw, 1.25rem);
+        --body-size: clamp(0.65rem, 0.9vw, 0.82rem);
+      }
+    }
+
+    @media (max-width: 600px) {
+      :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    /* === BOLD SIGNAL × PTO THEME === */
+    :root {
+      color-scheme: dark;
+      --font-display: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+      --font-mono: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", "Consolas", monospace;
+
+      --background: #080b11;
+      --background-elevated: #10151e;
+      --surface-1: #151b25;
+      --surface-2: #1b2330;
+      --surface-3: #263140;
+      --surface-4: #313d4f;
+      --foreground: #f3f6fb;
+      --foreground-secondary: #a7b2c4;
+      --foreground-muted: #6f7c91;
+      --border-subtle: rgba(255, 255, 255, 0.07);
+      --border-default: rgba(255, 255, 255, 0.12);
+      --primary: #4369ef;
+      --primary-hover: #5a92e6;
+      --accent-cyan: #24d7c8;
+      --accent-blue: #6c8fff;
+      --accent-purple: #9d7af3;
+      --success: #04d793;
+      --warning: #ffaa3b;
+      --danger: #ff4b7b;
+
+      --radius-sm: clamp(0.3rem, 0.5vw, 0.45rem);
+      --radius-md: clamp(0.45rem, 0.75vw, 0.7rem);
+      --radius-lg: clamp(0.65rem, 1vw, 1rem);
+      --radius-xl: clamp(0.85rem, 1.35vw, 1.35rem);
+      --space-1: clamp(0.2rem, 0.35vw, 0.3rem);
+      --space-2: clamp(0.35rem, 0.65vw, 0.55rem);
+      --space-3: clamp(0.55rem, 0.9vw, 0.8rem);
+      --space-4: clamp(0.75rem, 1.3vw, 1.15rem);
+      --space-5: clamp(1rem, 1.7vw, 1.5rem);
+      --space-6: clamp(1.25rem, 2.2vw, 2rem);
+
+      --slide-bg-deep: #080b11;
+      --slide-bg-gradient:
+        radial-gradient(circle at 16% 88%, rgba(67, 105, 239, 0.23), transparent 34%),
+        radial-gradient(circle at 86% 16%, rgba(36, 215, 200, 0.14), transparent 30%),
+        radial-gradient(circle at 64% 72%, rgba(255, 170, 59, 0.06), transparent 24%),
+        linear-gradient(145deg, #0c111b 0%, #080b11 54%, #0a1018 100%);
+
+      --deck-chrome-bg: rgba(12, 17, 27, 0.96);
+      --deck-chrome-border: rgba(255, 255, 255, 0.14);
+      --deck-chrome-text: #f3f6fb;
+      --deck-chrome-muted: #8e9aae;
+      --deck-chrome-accent: #24d7c8;
+      --deck-chrome-shadow: 0 14px 42px rgba(0, 0, 0, 0.48);
+      --deck-chrome-surface: rgba(30, 39, 53, 0.96);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--slide-bg-deep);
+      color: var(--foreground);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+
+    .slides-offset { width: 100%; transition: padding-right 0.28s var(--ease-out-expo); }
+
+    .slide {
+      isolation: isolate;
+      background: var(--slide-bg-gradient);
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.52;
+      background-image:
+        linear-gradient(var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+      background-size: clamp(2.5rem, 5vw, 5rem) clamp(2.5rem, 5vw, 5rem);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent 76%);
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      inset: clamp(0.7rem, 1.4vw, 1.3rem);
+      z-index: 0;
+      pointer-events: none;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .slide-index {
+      position: absolute;
+      z-index: 1;
+      top: clamp(1rem, 2.4vw, 2.1rem);
+      left: clamp(1.2rem, 3vw, 3rem);
+      color: rgba(243, 246, 251, 0.1);
+      font-family: var(--font-display);
+      font-size: clamp(4.8rem, 12vw, 11rem);
+      font-weight: 900;
+      line-height: 0.8;
+      letter-spacing: -0.07em;
+      user-select: none;
+    }
+
+    .deck-breadcrumb {
+      position: absolute;
+      z-index: 1;
+      top: clamp(1.2rem, 2.5vw, 2.3rem);
+      right: clamp(1.4rem, 3vw, 3rem);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--foreground-muted);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .deck-breadcrumb span {
+      color: var(--foreground);
+    }
+
+    .slide-object {
+      position: absolute;
+      z-index: 5;
+      pointer-events: auto;
+      box-sizing: border-box;
+      border-radius: var(--radius-sm);
+      outline: 1px dashed transparent;
+    }
+
+    .slide-object-text {
+      width: 100%;
+      min-height: 1.2em;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      outline: none;
+    }
+
+    .slide-object-graphic {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .slide-title {
+      color: var(--foreground);
+      font-family: var(--font-display);
+      font-size: var(--title-size);
+      font-weight: 900;
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+    }
+
+    .slide-kicker {
+      margin-bottom: var(--space-3);
+      color: var(--accent-cyan);
+      font: 700 var(--small-size) / 1.2 var(--font-mono);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .slide-lede {
+      color: var(--foreground-secondary);
+      font-size: var(--body-size);
+      line-height: 1.55;
+    }
+
+    .statement {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--primary) 18%, var(--surface-1));
+      color: var(--foreground);
+      font-size: clamp(0.76rem, 1.25vw, 1.08rem);
+      font-weight: 700;
+    }
+
+    .statement::before {
+      content: "";
+      width: clamp(0.45rem, 0.7vw, 0.65rem);
+      height: clamp(0.45rem, 0.7vw, 0.65rem);
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 clamp(0.5rem, 1vw, 0.95rem) color-mix(in srgb, var(--accent-cyan) 66%, transparent);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(clamp(0.75rem, 1.5vw, 1.25rem));
+      transition: opacity 0.58s var(--ease-out-expo), transform 0.58s var(--ease-out-expo);
+    }
+    .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+    .slide.visible .reveal:nth-child(1) { transition-delay: 0.04s; }
+    .slide.visible .reveal:nth-child(2) { transition-delay: 0.12s; }
+    .slide.visible .reveal:nth-child(3) { transition-delay: 0.2s; }
+
+    /* === PRODUCT EVIDENCE PRIMITIVES === */
+    .browser-frame {
+      display: grid;
+      grid-template-rows: clamp(1.7rem, 3.1vh, 2.4rem) minmax(0, 1fr);
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-default);
+      background: color-mix(in srgb, var(--background-elevated) 88%, transparent);
+      box-shadow: 0 clamp(0.8rem, 2vw, 1.6rem) clamp(2rem, 5vw, 4.5rem) rgba(0, 0, 0, 0.35);
+    }
+
+    .browser-bar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 0 var(--space-3);
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .browser-dots { display: flex; gap: var(--space-1); }
+    .browser-dots i {
+      width: clamp(0.36rem, 0.52vw, 0.5rem);
+      height: clamp(0.36rem, 0.52vw, 0.5rem);
+      border-radius: 50%;
+      background: var(--foreground-muted);
+      opacity: 0.55;
+    }
+
+    .browser-address {
+      min-width: 0;
+      padding: var(--space-1) var(--space-3);
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--foreground-muted);
+      font: 600 var(--small-size) / 1.1 var(--font-mono);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .browser-state {
+      color: var(--success);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+    }
+
+    .browser-body {
+      min-height: 0;
+      padding: var(--space-4);
+      overflow: hidden;
+    }
+
+    .ui-label {
+      color: var(--foreground-muted);
+      font: 700 var(--small-size) / 1.2 var(--font-mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .ui-value {
+      color: var(--foreground);
+      font: 700 clamp(0.75rem, 1vw, 0.98rem) / 1.3 var(--font-mono);
+    }
+
+    .metric-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      border-radius: 999px;
+      background: var(--surface-3);
+      color: var(--foreground-secondary);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+    }
+
+    .metric-pill.is-good { color: var(--success); }
+    .metric-pill.is-warn { color: var(--warning); }
+
+    /* === SLIDE 01: BROKEN CHAIN === */
+    .problem-stage {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: var(--space-4);
+      width: 100%;
+      height: 100%;
+    }
+
+    .problem-chain {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(1.1rem, 2.4vw, 2.2rem);
+      align-items: stretch;
+    }
+
+    .chain-step {
+      position: relative;
+      display: grid;
+      align-content: space-between;
+      min-width: 0;
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--surface-2) 76%, transparent);
+    }
+
+    .chain-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: calc(-1 * clamp(1.05rem, 2vw, 1.85rem));
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--foreground-muted);
+      font: 800 clamp(1rem, 2vw, 1.8rem) / 1 var(--font-mono);
+    }
+
+    .chain-step.is-broken::after {
+      content: "×";
+      display: grid;
+      place-items: center;
+      width: clamp(1.4rem, 2.5vw, 2.2rem);
+      height: clamp(1.4rem, 2.5vw, 2.2rem);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--danger) 15%, var(--surface-1));
+      color: var(--danger);
+    }
+
+    .chain-step strong {
+      color: var(--foreground);
+      font-size: clamp(1rem, 1.7vw, 1.48rem);
+      line-height: 1.15;
+    }
+
+    .chain-step p {
+      margin: var(--space-4) 0 0;
+      color: var(--foreground-secondary);
+      font-size: clamp(0.68rem, 0.92vw, 0.9rem);
+      line-height: 1.45;
+    }
+
+    .chain-step em {
+      margin-top: var(--space-3);
+      color: var(--danger);
+      font: 700 var(--small-size) / 1.25 var(--font-mono);
+      font-style: normal;
+    }
+
+    .innovation-band {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 32%, var(--surface-2)), color-mix(in srgb, var(--accent-cyan) 10%, var(--surface-1)));
+    }
+
+    .innovation-band b {
+      color: var(--accent-cyan);
+      font: 800 clamp(0.8rem, 1.2vw, 1.05rem) / 1 var(--font-mono);
+    }
+
+    .innovation-band span {
+      color: var(--foreground);
+      font-size: clamp(0.74rem, 1.15vw, 1rem);
+      font-weight: 700;
+    }
+
+    /* === SLIDE 02: FIXED CONTRACT + CANDIDATES === */
+    .planning-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.65fr);
+      gap: var(--space-4);
+      height: 100%;
+    }
+
+    .contract-pane {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: var(--space-3);
+      min-width: 0;
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+    }
+
+    .contract-pane h3, .candidate-pane h3 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: var(--h3-size);
+    }
+
+    .contract-list {
+      display: grid;
+      align-content: center;
+      gap: var(--space-2);
+    }
+
+    .contract-row {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .contract-row span {
+      color: var(--foreground-muted);
+      font-size: var(--small-size);
+    }
+
+    .contract-row b {
+      color: var(--foreground);
+      font: 700 var(--small-size) / 1.2 var(--font-mono);
+      text-align: right;
+    }
+
+    .lock-note {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--success);
+      font: 700 var(--small-size) / 1.25 var(--font-mono);
+    }
+
+    .lock-icon {
+      display: grid;
+      place-items: center;
+      width: clamp(1.4rem, 2vw, 1.85rem);
+      height: clamp(1.4rem, 2vw, 1.85rem);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--success) 12%, var(--surface-1));
+    }
+
+    .candidate-pane {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+
+    .candidate-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-3);
+      min-height: 0;
+    }
+
+    .candidate {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: var(--space-3);
+      min-width: 0;
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+    }
+
+    .candidate.is-recommended {
+      background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 28%, var(--surface-2)), var(--surface-2));
+      box-shadow: 0 0 clamp(1.2rem, 2.5vw, 2.2rem) color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+
+    .candidate small {
+      color: var(--foreground-muted);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .candidate strong {
+      color: var(--foreground);
+      font-size: clamp(0.9rem, 1.35vw, 1.18rem);
+    }
+
+    .candidate-code {
+      color: var(--foreground-secondary);
+      font: 600 clamp(0.62rem, 0.76vw, 0.76rem) / 1.55 var(--font-mono);
+    }
+
+    .candidate-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: var(--space-2);
+    }
+
+    .candidate-score b {
+      color: var(--foreground);
+      font: 900 clamp(1.25rem, 2.4vw, 2.15rem) / 1 var(--font-display);
+    }
+
+    .candidate-score span {
+      color: var(--foreground-muted);
+      font: 700 var(--small-size) / 1.1 var(--font-mono);
+      text-align: right;
+    }
+
+    .joint-principle {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-lg);
+      background: var(--surface-1);
+      text-align: center;
+    }
+
+    .joint-principle b {
+      color: var(--foreground);
+      font-size: clamp(0.7rem, 0.95vw, 0.92rem);
+    }
+
+    .joint-principle i {
+      color: var(--accent-cyan);
+      font: 900 clamp(1rem, 1.6vw, 1.45rem) / 1 var(--font-mono);
+      font-style: normal;
+    }
+
+    /* === SLIDE 03: LOAD3D DATA PATH === */
+    .load3d-shell {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      height: 100%;
+    }
+
+    .case-flag {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      color: var(--foreground-secondary);
+      font-size: var(--small-size);
+    }
+
+    .case-flag b {
+      padding: var(--space-1) var(--space-2);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--warning) 13%, var(--surface-2));
+      color: var(--warning);
+      font: 800 var(--small-size) / 1 var(--font-mono);
+    }
+
+    .data-path {
+      display: grid;
+      grid-template-columns: minmax(0, 0.82fr) auto minmax(0, 0.92fr) auto minmax(0, 1.2fr);
+      align-items: stretch;
+      gap: var(--space-3);
+      min-height: 0;
+    }
+
+    .data-stage {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: var(--space-3);
+      min-width: 0;
+      padding: var(--space-3);
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+    }
+
+    .data-stage h4 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: clamp(0.78rem, 1.1vw, 1rem);
+    }
+
+    .tensor-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(0.16rem, 0.35vw, 0.3rem);
+      align-self: center;
+    }
+
+    .tensor-grid span {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border-radius: clamp(0.18rem, 0.3vw, 0.28rem);
+      background: var(--surface-3);
+      color: var(--foreground-muted);
+      font: 700 clamp(0.48rem, 0.58vw, 0.62rem) / 1 var(--font-mono);
+    }
+
+    .tensor-grid span.is-window {
+      background: color-mix(in srgb, var(--primary) 36%, var(--surface-3));
+      color: var(--foreground);
+    }
+
+    .tensor-grid span.is-active {
+      background: var(--accent-cyan);
+      color: var(--background);
+      box-shadow: 0 0 clamp(0.55rem, 1.3vw, 1.1rem) color-mix(in srgb, var(--accent-cyan) 55%, transparent);
+    }
+
+    .c0-stack {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-1);
+      align-self: center;
+      transform: skewY(-2deg);
+    }
+
+    .c0-stack span {
+      display: grid;
+      place-items: center;
+      min-height: clamp(1.5rem, 3.3vh, 2.4rem);
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--primary) 22%, var(--surface-3));
+      color: var(--foreground-secondary);
+      font: 700 clamp(0.48rem, 0.58vw, 0.62rem) / 1 var(--font-mono);
+    }
+
+    .c0-stack span.is-pad { opacity: 0.28; }
+    .c0-stack span.is-active { background: var(--accent-cyan); color: var(--background); opacity: 1; }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: clamp(0.12rem, 0.24vw, 0.22rem);
+      align-self: center;
+    }
+
+    .matrix-grid span {
+      aspect-ratio: 1.15;
+      border-radius: clamp(0.12rem, 0.22vw, 0.2rem);
+      background: var(--surface-3);
+    }
+
+    .matrix-grid span.is-row { background: color-mix(in srgb, var(--primary) 34%, var(--surface-3)); }
+    .matrix-grid span.is-active {
+      background: var(--warning);
+      box-shadow: 0 0 clamp(0.5rem, 1vw, 0.9rem) color-mix(in srgb, var(--warning) 52%, transparent);
+    }
+
+    .data-arrow {
+      display: grid;
+      place-items: center;
+      color: var(--accent-cyan);
+      font: 900 clamp(1.2rem, 2.4vw, 2.2rem) / 1 var(--font-mono);
+    }
+
+    .data-caption {
+      color: var(--foreground-muted);
+      font: 700 var(--small-size) / 1.25 var(--font-mono);
+    }
+
+    .playback-line {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-lg);
+      background: var(--surface-1);
+    }
+
+    .playback-button {
+      display: grid;
+      place-items: center;
+      width: clamp(1.65rem, 2.5vw, 2.25rem);
+      height: clamp(1.65rem, 2.5vw, 2.25rem);
+      border-radius: 50%;
+      background: var(--foreground);
+      color: var(--background);
+      font: 900 var(--small-size) / 1 var(--font-mono);
+    }
+
+    .playback-track {
+      position: relative;
+      height: clamp(0.24rem, 0.48vw, 0.4rem);
+      border-radius: 999px;
+      background: var(--surface-3);
+    }
+
+    .playback-track::after {
+      content: "";
+      position: absolute;
+      inset: 0 62% 0 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--accent-cyan));
+    }
+
+    .playback-line code {
+      color: var(--foreground-secondary);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+    }
+
+    /* === SLIDE 04: PIPELINE SIMULATION === */
+    .pipeline-shell {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: var(--space-3);
+      height: 100%;
+    }
+
+    .scenario-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-2);
+    }
+
+    .scenario-tab {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: var(--space-2);
+      min-width: 0;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+    }
+
+    .scenario-tab.is-active {
+      background: color-mix(in srgb, var(--primary) 24%, var(--surface-2));
+    }
+
+    .scenario-tab span {
+      overflow: hidden;
+      color: var(--foreground-secondary);
+      font-size: clamp(0.65rem, 0.84vw, 0.82rem);
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .scenario-tab b {
+      color: var(--foreground);
+      font: 900 clamp(0.76rem, 1.08vw, 0.98rem) / 1 var(--font-mono);
+    }
+
+    .pipeline-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 0.48fr);
+      gap: var(--space-3);
+      min-height: 0;
+    }
+
+    .lane-panel {
+      display: grid;
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      gap: var(--space-2);
+      min-height: 0;
+    }
+
+    .lane-row {
+      display: grid;
+      grid-template-columns: clamp(5.4rem, 8.6vw, 8.2rem) minmax(0, 1fr);
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 0;
+    }
+
+    .lane-label {
+      color: var(--foreground-secondary);
+      font: 700 clamp(0.56rem, 0.68vw, 0.68rem) / 1.05 var(--font-mono);
+      text-align: right;
+    }
+
+    .lane-track {
+      position: relative;
+      height: clamp(1.15rem, 2.55vh, 1.75rem);
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      background-image: linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+      background-size: 20% 100%;
+    }
+
+    .task {
+      position: absolute;
+      top: 18%;
+      left: var(--x);
+      width: var(--w);
+      height: 64%;
+      display: grid;
+      place-items: center;
+      border-radius: clamp(0.2rem, 0.32vw, 0.3rem);
+      color: var(--foreground);
+      font: 800 clamp(0.48rem, 0.58vw, 0.62rem) / 1 var(--font-mono);
+      background: color-mix(in srgb, var(--tile-color) 72%, var(--surface-2));
+    }
+
+    .task.t0 { --tile-color: var(--accent-blue); }
+    .task.t1 { --tile-color: var(--accent-purple); }
+    .task.t2 { --tile-color: var(--warning); color: var(--background); }
+    .task.wait { --tile-color: var(--danger); }
+
+    .inspector-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: var(--space-3);
+      min-width: 0;
+      padding: var(--space-3);
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+    }
+
+    .inspector-panel h4 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: clamp(0.75rem, 1vw, 0.95rem);
+    }
+
+    .inspector-kv {
+      display: grid;
+      align-content: start;
+      gap: var(--space-2);
+    }
+
+    .inspector-kv div {
+      display: grid;
+      gap: var(--space-1);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .inspector-kv span {
+      color: var(--foreground-muted);
+      font-size: var(--small-size);
+    }
+
+    .inspector-kv b {
+      color: var(--foreground);
+      font: 700 clamp(0.58rem, 0.72vw, 0.72rem) / 1.35 var(--font-mono);
+    }
+
+    .tail-evidence {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+
+    .tail-chip {
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--warning) 20%, var(--surface-3)) 0 clamp(0.2rem, 0.4vw, 0.35rem), var(--surface-3) clamp(0.2rem, 0.4vw, 0.35rem) clamp(0.4rem, 0.8vw, 0.7rem));
+      color: var(--warning);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+    }
+
+    /* === SLIDE 05: DECISION + HANDOFF === */
+    .decision-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.3fr);
+      gap: var(--space-4);
+      height: 100%;
+    }
+
+    .decision-card {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: var(--space-4);
+      min-width: 0;
+      padding: var(--space-5);
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(150deg, color-mix(in srgb, var(--primary) 48%, var(--surface-2)), var(--surface-2));
+    }
+
+    .decision-card::after {
+      content: "84";
+      position: absolute;
+      right: calc(-1 * clamp(0.5rem, 1vw, 0.9rem));
+      bottom: calc(-1 * clamp(1.2rem, 2.5vw, 2.2rem));
+      color: rgba(255, 255, 255, 0.08);
+      font: 900 clamp(6rem, 15vw, 13rem) / 0.8 var(--font-display);
+      letter-spacing: -0.08em;
+    }
+
+    .decision-card small {
+      color: var(--accent-cyan);
+      font: 800 var(--small-size) / 1 var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .decision-card h3 {
+      margin: 0;
+      color: var(--foreground);
+      font: 900 clamp(1.35rem, 2.8vw, 2.6rem) / 1 var(--font-display);
+    }
+
+    .decision-card p {
+      margin: 0;
+      color: var(--foreground-secondary);
+      font-size: clamp(0.7rem, 1vw, 0.94rem);
+      line-height: 1.55;
+    }
+
+    .decision-metrics {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .handoff-pane {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+
+    .handoff-pane h3 {
+      margin: 0;
+      color: var(--foreground);
+      font-size: var(--h3-size);
+    }
+
+    .deliverable-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: var(--space-3);
+      min-height: 0;
+    }
+
+    .deliverable {
+      display: grid;
+      align-content: space-between;
+      gap: var(--space-2);
+      min-width: 0;
+      padding: var(--space-3);
+      border-radius: var(--radius-lg);
+      background: var(--surface-2);
+    }
+
+    .deliverable header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+
+    .deliverable header b {
+      color: var(--foreground);
+      font-size: clamp(0.7rem, 0.95vw, 0.9rem);
+    }
+
+    .deliverable header code {
+      color: var(--accent-cyan);
+      font: 700 var(--small-size) / 1 var(--font-mono);
+    }
+
+    .code-lines {
+      color: var(--foreground-secondary);
+      font: 600 clamp(0.5rem, 0.63vw, 0.64rem) / 1.45 var(--font-mono);
+      white-space: pre-line;
+    }
+
+    .check-lines {
+      display: grid;
+      gap: var(--space-1);
+      color: var(--foreground-secondary);
+      font-size: clamp(0.56rem, 0.7vw, 0.7rem);
+      line-height: 1.35;
+    }
+
+    .check-lines span::before {
+      content: "✓";
+      margin-right: var(--space-1);
+      color: var(--success);
+      font-weight: 900;
+    }
+
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: var(--space-1);
+      align-items: center;
+      padding: var(--space-2);
+      border-radius: var(--radius-lg);
+      background: var(--surface-1);
+    }
+
+    .journey span {
+      position: relative;
+      color: var(--foreground-secondary);
+      font-size: clamp(0.58rem, 0.75vw, 0.74rem);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .journey span:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: calc(-1 * clamp(0.35rem, 0.7vw, 0.6rem));
+      color: var(--foreground-muted);
+      font-family: var(--font-mono);
+    }
+
+    .journey span:last-child { color: var(--accent-cyan); }
+
+    /* === EDITABLE DECK CHROME === */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 8000;
+      width: 0;
+      height: clamp(0.12rem, 0.25vw, 0.2rem);
+      pointer-events: none;
+      background: linear-gradient(90deg, var(--primary), var(--accent-cyan));
+      transition: width 0.25s var(--ease-out-expo);
+    }
+
+    .nav-dots {
+      position: fixed;
+      bottom: clamp(0.55rem, 1.7vh, 1.15rem);
+      left: 50%;
+      z-index: 8000;
+      display: flex;
+      gap: clamp(0.3rem, 0.6vw, 0.48rem);
+      transform: translateX(-50%);
+    }
+
+    .nav-dots button {
+      width: clamp(0.42rem, 0.68vw, 0.58rem);
+      height: clamp(0.42rem, 0.68vw, 0.58rem);
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--deck-chrome-text) 22%, transparent);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .nav-dots button.active {
+      background: var(--deck-chrome-accent);
+      transform: scale(1.18);
+    }
+
+    .deck-left-hover-anchor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: clamp(0.3rem, 0.7vw, 0.5rem);
+      min-width: min(480px, 86vw);
+      min-height: clamp(2.6rem, 5vw, 3.5rem);
+      padding: clamp(0.35rem, 0.8vw, 0.55rem);
+      pointer-events: auto;
+    }
+
+    .deck-left-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: clamp(0.28rem, 0.58vw, 0.45rem);
+    }
+
+    .deck-control,
+    .deck-edit-chrome,
+    .deck-add-element-menu,
+    .rte-toolbar,
+    .slide-sidebar {
+      color: var(--deck-chrome-text);
+      font-family: var(--font-body);
+    }
+
+    .deck-control {
+      padding: clamp(0.4rem, 0.75vw, 0.6rem) clamp(0.6rem, 1vw, 0.85rem);
+      border: 1px solid var(--deck-chrome-border);
+      border-radius: clamp(0.45rem, 0.75vw, 0.68rem);
+      background: var(--deck-chrome-bg);
+      color: var(--deck-chrome-text);
+      font-size: clamp(0.68rem, 0.84vw, 0.8rem);
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: opacity 0.22s ease, background 0.22s ease;
+    }
+
+    .deck-control.show,
+    .deck-control.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .deck-control:hover,
+    .deck-control.active {
+      background: color-mix(in srgb, var(--deck-chrome-accent) 17%, var(--deck-chrome-bg));
+    }
+
+    .deck-control.is-edit-only { display: none; }
+    body.deck-edit-mode .deck-control.is-edit-only { display: inline-flex; }
+    .deck-control.is-fullscreen-hidden { display: none !important; }
+
+    .deck-edit-chrome {
+      display: none;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-1);
+      border: 1px solid var(--deck-chrome-border);
+      border-radius: var(--radius-md);
+      background: var(--deck-chrome-bg);
+      box-shadow: var(--deck-chrome-shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    body.deck-edit-mode .deck-edit-chrome { display: flex; }
+    body.deck-edit-mode .deck-edit-chrome.show { opacity: 1; pointer-events: auto; }
+
+    .deck-edit-chrome button,
+    .sidebar-footer button,
+    .filmstrip-actions button,
+    .rte-toolbar button,
+    .deck-add-element-menu button {
+      border: 1px solid var(--deck-chrome-border);
+      border-radius: var(--radius-sm);
+      background: var(--deck-chrome-surface);
+      color: var(--deck-chrome-text);
+      cursor: pointer;
+    }
+
+    .deck-edit-chrome button {
+      min-width: clamp(2rem, 3vw, 2.5rem);
+      height: clamp(2rem, 3vw, 2.5rem);
+      padding: 0 var(--space-2);
+      font-size: clamp(0.66rem, 0.8vw, 0.78rem);
+    }
+
+    .deck-edit-chrome button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .deck-edit-chrome .deck-btn-done {
+      background: var(--deck-chrome-accent);
+      color: var(--background);
+      font-weight: 800;
+    }
+
+    .deck-add-element-menu {
+      position: fixed;
+      z-index: 10002;
+      display: none;
+      flex-direction: column;
+      gap: var(--space-1);
+      min-width: clamp(8.5rem, 13vw, 11rem);
+      padding: var(--space-2);
+      border: 1px solid var(--deck-chrome-border);
+      border-radius: var(--radius-md);
+      background: var(--deck-chrome-bg);
+      box-shadow: var(--deck-chrome-shadow);
+    }
+
+    .deck-add-element-menu.open { display: flex; }
+    .deck-add-element-menu button {
+      padding: var(--space-2) var(--space-3);
+      text-align: left;
+      font-size: clamp(0.68rem, 0.82vw, 0.8rem);
+    }
+
+    .slide-sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9500;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      width: min(220px, 28vw);
+      padding: var(--space-3);
+      border-left: 1px solid var(--deck-chrome-border);
+      background: var(--deck-chrome-bg);
+      box-shadow: var(--deck-chrome-shadow);
+      transform: translateX(100%);
+      transition: transform 0.28s var(--ease-out-expo);
+    }
+
+    body.deck-sidebar-open .slide-sidebar { transform: translateX(0); }
+    body.deck-sidebar-open .slides-offset { padding-right: min(220px, 28vw); }
+
+    .slide-sidebar h3 {
+      margin: 0;
+      color: var(--deck-chrome-muted);
+      font-size: clamp(0.66rem, 0.82vw, 0.8rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .filmstrip-list {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: var(--space-2);
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .filmstrip-item {
+      padding: var(--space-1);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--deck-chrome-surface) 82%, transparent);
+      cursor: grab;
+    }
+
+    .filmstrip-item.is-current { border-color: var(--deck-chrome-accent); }
+    .filmstrip-item.is-dragging { opacity: 0.45; }
+    .filmstrip-item.is-drop-target { box-shadow: 0 0 0 2px var(--deck-chrome-accent); }
+
+    .filmstrip-thumb-host {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      background: var(--background);
+    }
+
+    .filmstrip-actions,
+    .sidebar-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-1);
+    }
+
+    .filmstrip-actions {
+      margin-top: var(--space-1);
+      color: var(--deck-chrome-muted);
+      font-size: clamp(0.6rem, 0.72vw, 0.7rem);
+    }
+
+    .filmstrip-actions button,
+    .sidebar-footer button {
+      padding: var(--space-1) var(--space-2);
+      font-size: clamp(0.6rem, 0.72vw, 0.7rem);
+    }
+
+    .filmstrip-copy { opacity: 0; transition: opacity 0.18s ease; }
+    .filmstrip-item:hover .filmstrip-copy,
+    .filmstrip-item:focus-within .filmstrip-copy { opacity: 1; }
+
+    .slide-edit-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    body.deck-edit-mode .slide { cursor: default; }
+    body.deck-edit-mode .slide-object {
+      outline-color: color-mix(in srgb, var(--deck-chrome-muted) 42%, transparent);
+    }
+
+    .slide-object.is-selected {
+      outline: 2px solid var(--deck-chrome-accent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--deck-chrome-accent) 28%, transparent);
+    }
+
+    .slide-object-move,
+    .slide-object-delete,
+    .slide-object-resize {
+      position: absolute;
+      z-index: 12;
+      display: none;
+      border: 1px solid var(--deck-chrome-border);
+      background: var(--deck-chrome-bg);
+      color: var(--deck-chrome-muted);
+    }
+
+    .slide-object-move {
+      left: calc(-1 * clamp(1.5rem, 2vw, 1.8rem));
+      top: var(--space-1);
+      width: clamp(1.25rem, 1.8vw, 1.55rem);
+      height: clamp(1.7rem, 2.4vw, 2.1rem);
+      padding: 0;
+      border-radius: var(--radius-sm);
+      cursor: grab;
+    }
+
+    .slide-object-delete {
+      left: calc(-1 * clamp(1.5rem, 2vw, 1.8rem));
+      top: clamp(2rem, 3vw, 2.55rem);
+      width: clamp(1.25rem, 1.8vw, 1.55rem);
+      height: clamp(1.3rem, 1.9vw, 1.65rem);
+      padding: 0;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .slide-object-resize {
+      right: calc(-1 * clamp(0.35rem, 0.55vw, 0.48rem));
+      bottom: calc(-1 * clamp(0.35rem, 0.55vw, 0.48rem));
+      width: clamp(0.7rem, 1vw, 0.92rem);
+      height: clamp(0.7rem, 1vw, 0.92rem);
+      padding: 0;
+      border-radius: clamp(0.16rem, 0.28vw, 0.24rem);
+      background: var(--deck-chrome-accent);
+      cursor: nwse-resize;
+    }
+
+    body.deck-edit-mode .slide-object .slide-object-move { display: grid; place-items: center; }
+    body.deck-edit-mode .slide-object:hover .slide-object-delete,
+    body.deck-edit-mode .slide-object.is-selected .slide-object-delete { display: grid; place-items: center; }
+    body.deck-edit-mode .slide-object.is-selected .slide-object-resize { display: block; }
+
+    .snap-line-v,
+    .snap-line-h {
+      position: absolute;
+      z-index: 20;
+      pointer-events: none;
+      background: var(--danger);
+      opacity: 0.88;
+    }
+    .snap-line-v { top: 0; bottom: 0; width: 1px; }
+    .snap-line-h { left: 0; right: 0; height: 1px; }
+
+    .rte-toolbar {
+      position: fixed;
+      z-index: 9800;
+      display: none;
+      flex-direction: column;
+      gap: var(--space-1);
+      min-width: min(270px, 90vw);
+      padding: var(--space-2);
+      border: 1px solid var(--deck-chrome-border);
+      border-radius: var(--radius-md);
+      background: var(--deck-chrome-bg);
+      box-shadow: var(--deck-chrome-shadow);
+    }
+
+    .rte-toolbar.visible { display: flex; }
+    .rte-main, .rte-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+    .rte-toolbar button {
+      padding: var(--space-1) var(--space-2);
+      font-size: clamp(0.62rem, 0.72vw, 0.7rem);
+    }
+    .rte-toolbar button.is-active { background: color-mix(in srgb, var(--deck-chrome-accent) 20%, var(--deck-chrome-surface)); }
+    .rte-panel {
+      padding-top: var(--space-1);
+      border-top: 1px solid var(--deck-chrome-border);
+    }
+    .rte-panel[hidden] { display: none; }
+
+    .deck-laser-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 9300;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    body.deck-laser-mode .deck-laser-layer { opacity: 1; }
+    body.deck-laser-mode .slides-offset,
+    body.deck-laser-mode .slide { cursor: none; }
+
+    .laser-dot {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: clamp(0.85rem, 1.4vw, 1.2rem);
+      height: clamp(0.85rem, 1.4vw, 1.2rem);
+      border-radius: 50%;
+      opacity: 0;
+      transform: translate(-999px, -999px);
+      background: radial-gradient(circle, #fff 0 14%, var(--danger) 16% 45%, rgba(255, 75, 123, 0.25) 46% 74%, transparent 75%);
+      box-shadow: 0 0 clamp(0.5rem, 1vw, 0.85rem) rgba(255,255,255,0.8), 0 0 clamp(1rem, 2vw, 1.8rem) color-mix(in srgb, var(--danger) 80%, transparent);
+      mix-blend-mode: screen;
+      will-change: transform;
+    }
+    body.deck-laser-mode .laser-dot { opacity: 1; }
+
+    .media-placeholder {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      min-height: clamp(5rem, 16vh, 9rem);
+      border: 1px dashed var(--deck-chrome-border);
+      border-radius: var(--radius-md);
+      background: var(--deck-chrome-surface);
+      color: var(--deck-chrome-muted);
+    }
+
+    .media-placeholder button {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--deck-chrome-border);
+      border-radius: var(--radius-sm);
+      background: var(--deck-chrome-bg);
+      color: var(--deck-chrome-text);
+      cursor: pointer;
+    }
+
+    body.deck-edit-mode.slide-anim-paused .reveal { transition: none !important; }
+  </style>
+</head>
+<body>
+  <!-- === EDITOR / PRESENTATION CHROME === -->
+  <div class="deck-left-hover-anchor" id="deckLeftHover" aria-label="Deck controls">
+    <div class="deck-left-row">
+      <button type="button" class="deck-control" id="editToggle" title="编辑模式（E）">Edit</button>
+      <button type="button" class="deck-control" id="pagesToggle" title="页面管理">Pages</button>
+      <button type="button" class="deck-control" id="laserToggle" title="激光笔">Laser</button>
+      <button type="button" class="deck-control" id="fullscreenToggle" title="全屏">Fullscreen</button>
+      <button type="button" class="deck-control is-edit-only" id="btnSave" title="保存（Ctrl/Cmd + S）">Save</button>
+      <button type="button" class="deck-control is-edit-only" id="btnAddElement" title="添加文本或媒体">Add element</button>
+    </div>
+    <div class="deck-edit-chrome" id="deckEditChrome" data-deck-chrome-surface role="toolbar" aria-label="编辑工具">
+      <button type="button" id="btnUndo" aria-label="撤销" title="撤销">Undo</button>
+      <button type="button" id="btnRedo" aria-label="重做" title="重做">Redo</button>
+      <button type="button" class="deck-btn-done" id="btnDoneEdit">Done</button>
+    </div>
+  </div>
+
+  <div class="deck-add-element-menu" id="deckAddElementMenu" data-deck-chrome-surface hidden>
+    <button type="button" data-add-kind="text">Text</button>
+    <button type="button" data-add-kind="image">Image</button>
+    <button type="button" data-add-kind="video">Video</button>
+  </div>
+
+  <div class="progress-bar" id="progressBar"></div>
+  <nav class="nav-dots" id="navDots" aria-label="页面导航"></nav>
+  <div class="deck-laser-layer" id="deckLaserLayer" aria-hidden="true"><div class="laser-dot" id="laserDot"></div></div>
+
+  <aside class="slide-sidebar" id="slideSidebar" aria-label="页面管理">
+    <h3>Pages</h3>
+    <div class="filmstrip-list" id="filmstripList"></div>
+    <div class="sidebar-footer">
+      <button type="button" id="btnExport">Export HTML</button>
+      <button type="button" id="btnNewPage">+New Page</button>
+    </div>
+  </aside>
+
+  <div class="rte-toolbar" id="rteToolbar" data-deck-chrome-surface role="toolbar" aria-label="文字格式">
+    <div class="rte-main">
+      <button type="button" data-rte-cmd="bold"><b>B</b></button>
+      <button type="button" data-rte-cmd="italic"><i>I</i></button>
+      <button type="button" data-rte-open="font">Font</button>
+      <button type="button" data-rte-open="scale">Scale</button>
+      <button type="button" data-rte-open="px">Px</button>
+    </div>
+    <div class="rte-panel" data-rte-panel="font" hidden>
+      <button type="button" data-font="var(--font-body)">Body</button>
+      <button type="button" data-font="var(--font-display)">Display</button>
+      <button type="button" data-font="var(--font-mono)">Mono</button>
+      <button type="button" data-font="Georgia, serif">Serif</button>
+    </div>
+    <div class="rte-panel" data-rte-panel="scale" hidden>
+      <button type="button" data-scale="0.72">S</button>
+      <button type="button" data-scale="1">M</button>
+      <button type="button" data-scale="1.55">L</button>
+      <button type="button" data-scale="2.25">XL</button>
+    </div>
+    <div class="rte-panel" data-rte-panel="px" hidden>
+      <button type="button" data-px="24">24</button>
+      <button type="button" data-px="36">36</button>
+      <button type="button" data-px="48">48</button>
+      <button type="button" data-px="72">72</button>
+      <button type="button" data-px="96">96</button>
+    </div>
+  </div>
+
+  <!-- === FIVE-SLIDE STORY DECK === -->
+  <main class="slides-offset" id="deck">
+    <section class="slide visible" id="slide-01" aria-label="算子规划的三处断层">
+      <div class="slide-index decorative" aria-hidden="true">01</div>
+      <div class="deck-breadcrumb">Operator Planning <span>断层</span></div>
+      <div class="slide-edit-layer" aria-hidden="true">
+        <div class="slide-object reveal" data-slide-object data-oid="s01-title" data-object-type="text" style="left:7%;top:12%;width:78%;">
+          <div class="slide-object-text" contenteditable="false">
+            <div class="slide-kicker">Problem / Why now</div>
+            <div class="slide-title">算子开发缺的不是参数，<br>而是一条可理解、可比较的规划路径</div>
+          </div>
+        </div>
+        <div class="slide-object reveal" data-slide-object data-oid="s01-visual" data-object-type="graphic" style="left:7%;top:43%;width:86%;height:42%;">
+          <div class="slide-object-graphic problem-stage">
+            <div class="problem-chain">
+              <article class="chain-step is-broken">
+                <strong>理解 API</strong>
+                <p>行为藏在文档与代码中，用户先承担概念翻译。</p>
+                <em>认知负荷高</em>
+              </article>
+              <article class="chain-step is-broken">
+                <strong>理解数据</strong>
+                <p>Format 只有名称，看不见坐标与布局如何变化。</p>
+                <em>数据变化不可见</em>
+              </article>
+              <article class="chain-step is-broken">
+                <strong>模拟执行</strong>
+                <p>没有 Pipeline 预演，只能依赖经验与反复试跑。</p>
+                <em>调度假设不可证</em>
+              </article>
+              <article class="chain-step">
+                <strong>进入开发</strong>
+                <p>方案依据、收益预期和代码骨架没有连续交付。</p>
+                <em>决策难复用</em>
+              </article>
+            </div>
+            <div class="innovation-band">
+              <b>主动创新</b>
+              <span>把一次规划沉淀为可比较、可追溯、可交付的方案资产。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-02" aria-label="固定输入展开联合方案">
+      <div class="slide-index decorative" aria-hidden="true">02</div>
+      <div class="deck-breadcrumb">Operator Planning <span>原则</span></div>
+      <div class="slide-edit-layer" aria-hidden="true">
+        <div class="slide-object reveal" data-slide-object data-oid="s02-title" data-object-type="text" style="left:7%;top:11%;width:78%;">
+          <div class="slide-object-text" contenteditable="false">
+            <div class="slide-kicker">Principle / Comparable by design</div>
+            <div class="slide-title">固定输入，只让实现策略变化</div>
+            <div class="slide-lede">同一个 OP-004 输入契约，展开三种完整执行方案；收益比较才有意义。</div>
+          </div>
+        </div>
+        <div class="slide-object reveal" data-slide-object data-oid="s02-visual" data-object-type="graphic" style="left:7%;top:34%;width:86%;height:54%;">
+          <div class="slide-object-graphic browser-frame">
+            <div class="browser-bar">
+              <div class="browser-dots"><i></i><i></i><i></i></div>
+              <div class="browser-address">OP-004 / Cube + Vector Fusion / Operator Plan</div>
+              <div class="browser-state">CONTRACT LOCKED</div>
+            </div>
+            <div class="browser-body planning-shell">
+              <section class="contract-pane">
+                <h3>固定输入契约</h3>
+                <div class="contract-list">
+                  <div class="contract-row"><span>Shape</span><b>A 128×64<br>B 64×128</b></div>
+                  <div class="contract-row"><span>Output</span><b>Z 128×128</b></div>
+                  <div class="contract-row"><span>Format</span><b>NZ → ND</b></div>
+                  <div class="contract-row"><span>Hardware</span><b>910B / half</b></div>
+                  <div class="contract-row"><span>Total length</span><b>16,384</b></div>
+                </div>
+                <div class="lock-note"><span class="lock-icon">✓</span>三个方案共用同一输入</div>
+              </section>
+              <section class="candidate-pane">
+                <h3>联合执行方案</h3>
+                <div class="candidate-grid">
+                  <article class="candidate">
+                    <small>Baseline</small>
+                    <strong>串行基线</strong>
+                    <div class="candidate-code">8 核 / 8 Tile<br>Buffer 1<br>顺序搬运与计算</div>
+                    <div class="candidate-score"><b>112 ns</b><span>overlap<br>18%</span></div>
+                  </article>
+                  <article class="candidate is-recommended">
+                    <small>Recommended</small>
+                    <strong>双缓冲平衡</strong>
+                    <div class="candidate-code">8 核 / 8 Tile<br>Buffer 2<br>搬运覆盖计算</div>
+                    <div class="candidate-score"><b>84 ns</b><span>overlap<br>61%</span></div>
+                  </article>
+                  <article class="candidate">
+                    <small>Challenger</small>
+                    <strong>融合高收益</strong>
+                    <div class="candidate-code">12 核 / 4 Tile<br>Buffer 2<br>跨引擎握手</div>
+                    <div class="candidate-score"><b>72 ns</b><span>overlap<br>78%</span></div>
+                  </article>
+                </div>
+                <div class="joint-principle"><b>Tiling：数据怎么切</b><i>＋</i><b>Pipeline：任务怎么跑</b></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-03" aria-label="Load3D API 与格式转换可视化">
+      <div class="slide-index decorative" aria-hidden="true">03</div>
+      <div class="deck-breadcrumb">Operator Planning <span>理解</span></div>
+      <div class="slide-edit-layer" aria-hidden="true">
+        <div class="slide-object reveal" data-slide-object data-oid="s03-title" data-object-type="text" style="left:7%;top:10%;width:82%;">
+          <div class="slide-object-text" contenteditable="false">
+            <div class="slide-kicker">Cognitive offload / API visualization</div>
+            <div class="slide-title">把 API 和 Format，变成可播放的数据路径</div>
+          </div>
+        </div>
+        <div class="slide-object reveal" data-slide-object data-oid="s03-visual" data-object-type="graphic" style="left:7%;top:31%;width:86%;height:55%;">
+          <div class="slide-object-graphic browser-frame">
+            <div class="browser-bar">
+              <div class="browser-dots"><i></i><i></i><i></i></div>
+              <div class="browser-address">OP-003 / Load3D / API 可视化</div>
+              <div class="browser-state">STEP 5 / 300</div>
+            </div>
+            <div class="browser-body load3d-shell">
+              <div class="case-flag"><span>独立能力案例：用于解释复杂 API，不属于 OP-004 主线</span><b>NCHW → NC1HWC0 → A2</b></div>
+              <div class="data-path">
+                <section class="data-stage">
+                  <h4>NCHW 输入</h4>
+                  <div class="tensor-grid">
+                    <span>0,0</span><span>0,1</span><span>0,2</span><span>0,3</span>
+                    <span>1,0</span><span class="is-window">1,1</span><span class="is-window">1,2</span><span>1,3</span>
+                    <span>2,0</span><span class="is-window is-active">2,1</span><span class="is-window">2,2</span><span>2,3</span>
+                    <span>3,0</span><span>3,1</span><span>3,2</span><span>3,3</span>
+                  </div>
+                  <div class="data-caption">源坐标 x[h=2,w=1,c=0]</div>
+                </section>
+                <div class="data-arrow">→</div>
+                <section class="data-stage">
+                  <h4>A1：NC1HWC0</h4>
+                  <div class="c0-stack">
+                    <span>C0</span><span>C1</span><span>C2</span><span class="is-pad">PAD</span>
+                    <span>C0</span><span class="is-active">C1</span><span>C2</span><span class="is-pad">PAD</span>
+                    <span>C0</span><span>C1</span><span>C2</span><span class="is-pad">PAD</span>
+                    <span>C0</span><span>C1</span><span>C2</span><span class="is-pad">PAD</span>
+                  </div>
+                  <div class="data-caption">物理对齐槽位可见</div>
+                </section>
+                <div class="data-arrow">→</div>
+                <section class="data-stage">
+                  <h4>A2：逻辑矩阵</h4>
+                  <div class="matrix-grid">
+                    <span class="is-row"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row is-active"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row"></span><span class="is-row"></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                  </div>
+                  <div class="data-caption">row 0 / col 4 正在写入</div>
+                </section>
+              </div>
+              <div class="playback-line"><span class="playback-button">▶</span><span class="playback-track"></span><code>patch 0, element 4</code></div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-object reveal" data-slide-object data-oid="s03-statement" data-object-type="text" style="left:7%;top:89%;width:72%;">
+          <div class="slide-object-text statement" contenteditable="false">从“记忆规则”变成“观察数据如何变化”</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-04" aria-label="三种 Pipeline 方案模拟对比">
+      <div class="slide-index decorative" aria-hidden="true">04</div>
+      <div class="deck-breadcrumb">Operator Planning <span>模拟</span></div>
+      <div class="slide-edit-layer" aria-hidden="true">
+        <div class="slide-object reveal" data-slide-object data-oid="s04-title" data-object-type="text" style="left:7%;top:10%;width:82%;">
+          <div class="slide-object-text" contenteditable="false">
+            <div class="slide-kicker">Simulation / Evidence before code</div>
+            <div class="slide-title">在写代码前，先跑完三种流水假设</div>
+          </div>
+        </div>
+        <div class="slide-object reveal" data-slide-object data-oid="s04-visual" data-object-type="graphic" style="left:7%;top:30%;width:86%;height:58%;">
+          <div class="slide-object-graphic browser-frame">
+            <div class="browser-bar">
+              <div class="browser-dots"><i></i><i></i><i></i></div>
+              <div class="browser-address">OP-004 / Tiling + Pipeline 联合模拟</div>
+              <div class="browser-state">6 LANES</div>
+            </div>
+            <div class="browser-body pipeline-shell">
+              <div class="scenario-tabs">
+                <div class="scenario-tab"><span>串行基线 · overlap 18%</span><b>112 ns</b></div>
+                <div class="scenario-tab is-active"><span>双缓冲平衡 · overlap 61%</span><b>84 ns</b></div>
+                <div class="scenario-tab"><span>融合高收益 · overlap 78%</span><b>72 ns</b></div>
+              </div>
+              <div class="pipeline-layout">
+                <div class="lane-panel">
+                  <div class="lane-row"><span class="lane-label">MTE2 / CopyIn</span><div class="lane-track"><i class="task t0" style="--x:2%;--w:16%;">t0</i><i class="task t1" style="--x:20%;--w:18%;">t1</i><i class="task t2" style="--x:53%;--w:17%;">t2</i></div></div>
+                  <div class="lane-row"><span class="lane-label">MTE1 / LoadData</span><div class="lane-track"><i class="task t0" style="--x:16%;--w:17%;">t0</i><i class="task t1" style="--x:39%;--w:18%;">t1</i><i class="task t2" style="--x:66%;--w:18%;">t2</i></div></div>
+                  <div class="lane-row"><span class="lane-label">Cube / MMAD</span><div class="lane-track"><i class="task t0" style="--x:28%;--w:19%;">t0</i><i class="task t1" style="--x:51%;--w:20%;">t1</i><i class="task t2" style="--x:75%;--w:20%;">t2</i></div></div>
+                  <div class="lane-row"><span class="lane-label">FLOWCTRL / Sync</span><div class="lane-track"><i class="task wait" style="--x:43%;--w:9%;">wait</i><i class="task wait" style="--x:68%;--w:9%;">wait</i><i class="task wait" style="--x:88%;--w:8%;">wait</i></div></div>
+                  <div class="lane-row"><span class="lane-label">Vector / Epilogue</span><div class="lane-track"><i class="task t0" style="--x:46%;--w:16%;">t0</i><i class="task t1" style="--x:64%;--w:17%;">t1</i><i class="task t2" style="--x:81%;--w:17%;">t2</i></div></div>
+                  <div class="lane-row"><span class="lane-label">FIXP / CopyOut</span><div class="lane-track"><i class="task t0" style="--x:58%;--w:13%;">t0</i><i class="task t1" style="--x:73%;--w:14%;">t1</i><i class="task t2" style="--x:88%;--w:10%;">t2</i></div></div>
+                </div>
+                <aside class="inspector-panel">
+                  <h4>一次选择，五处联动</h4>
+                  <div class="inspector-kv">
+                    <div><span>Tiling</span><b>B8 / T8 / Buffer 2</b></div>
+                    <div><span>Code</span><b>prefetch n+2</b></div>
+                    <div><span>Timeline</span><b>6 lanes / no links</b></div>
+                    <div><span>Inspector</span><b>wait 原因可解释</b></div>
+                    <div><span>Benefit</span><b>-25% vs baseline</b></div>
+                  </div>
+                  <div class="tail-evidence"><span class="tail-chip">Former 320/352</span><span class="tail-chip">Tail 304/352</span></div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-05" aria-label="规划决策与开发交付">
+      <div class="slide-index decorative" aria-hidden="true">05</div>
+      <div class="deck-breadcrumb">Operator Planning <span>决策</span></div>
+      <div class="slide-edit-layer" aria-hidden="true">
+        <div class="slide-object reveal" data-slide-object data-oid="s05-title" data-object-type="text" style="left:7%;top:9%;width:82%;">
+          <div class="slide-object-text" contenteditable="false">
+            <div class="slide-kicker">Decision / Handoff</div>
+            <div class="slide-title">最终交付的不是一张图，<br>而是可继续开发的方案包</div>
+          </div>
+        </div>
+        <div class="slide-object reveal" data-slide-object data-oid="s05-visual" data-object-type="graphic" style="left:7%;top:36%;width:86%;height:48%;">
+          <div class="slide-object-graphic decision-layout">
+            <section class="decision-card">
+              <small>Selected for development</small>
+              <h3>双缓冲平衡</h3>
+              <p>预计时间下降 25%，同步与缓冲风险仍可控。融合高收益保留为后续 profiling challenger，而不是盲选最快估算值。</p>
+              <div class="decision-metrics"><span class="metric-pill is-good">84 ns</span><span class="metric-pill is-good">overlap 61%</span><span class="metric-pill">Buffer 2</span><span class="metric-pill is-warn">风险 medium</span></div>
+            </section>
+            <section class="handoff-pane">
+              <h3>进入下一环节的四项交付</h3>
+              <div class="deliverable-grid">
+                <article class="deliverable">
+                  <header><b>联合契约</b><code>01</code></header>
+                  <div class="code-lines">BLOCK_DIM = 8
+TILE_NUM = 8
+BUFFER_NUM = 2</div>
+                </article>
+                <article class="deliverable">
+                  <header><b>Host / Tiling</b><code>02</code></header>
+                  <div class="code-lines">formerLength
+tailLength
+tileLength</div>
+                </article>
+                <article class="deliverable">
+                  <header><b>Kernel 框架</b><code>03</code></header>
+                  <div class="code-lines">CopyIn(n+2)
+MMAD(tile n)
+Branch / Mask</div>
+                </article>
+                <article class="deliverable">
+                  <header><b>Profiling checklist</b><code>04</code></header>
+                  <div class="check-lines"><span>MTE2 是否覆盖 Cube</span><span>peak buffer 是否安全</span><span>CopyOut 是否反压</span></div>
+                </article>
+              </div>
+              <div class="journey"><span>看不懂</span><span>看见</span><span>模拟</span><span>比较</span><span>决定</span><span>开发</span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script id="deck-persisted-state" type="application/json"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    var STORAGE_KEY = 'ascend-operator-planning-story-v1';
+    var deckRoot = document.getElementById('deck');
+    var body = document.body;
+    var sidebar;
+    var editor;
+    var rte;
+    var controls;
+
+    body.dataset.runtimePhase = 'boot';
+    window.addEventListener('error', function (event) {
+      body.dataset.runtimeError = event.message || 'Unknown runtime error';
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      body.dataset.runtimeError = String(event.reason || 'Unhandled promise rejection');
+    });
+
+    function scopedSlides() {
+      return Array.from(deckRoot.querySelectorAll(':scope > section.slide'));
+    }
+
+    function uid(prefix) {
+      return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function isTypingTarget(target) {
+      return !!target.closest('input, textarea, select, [contenteditable="true"]');
+    }
+
+    function removeTransient(root) {
+      root.querySelectorAll('.is-selected, .snap-line-v, .snap-line-h').forEach(function (node) {
+        node.classList.remove('is-selected');
+        if (node.classList.contains('snap-line-v') || node.classList.contains('snap-line-h')) node.remove();
+      });
+      root.querySelectorAll('[contenteditable]').forEach(function (node) {
+        node.setAttribute('contenteditable', 'false');
+      });
+    }
+
+    function ensureObjectControls(root) {
+      (root || deckRoot).querySelectorAll('[data-slide-object]').forEach(function (object) {
+        if (!object.querySelector(':scope > .slide-object-move')) {
+          var move = document.createElement('button');
+          move.type = 'button';
+          move.className = 'slide-object-move';
+          move.setAttribute('aria-label', '移动对象');
+          move.textContent = '⠿';
+          object.appendChild(move);
+        }
+        if (!object.querySelector(':scope > .slide-object-delete')) {
+          var del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'slide-object-delete';
+          del.setAttribute('aria-label', '删除对象');
+          del.textContent = '×';
+          object.appendChild(del);
+        }
+        if (!object.querySelector(':scope > .slide-object-resize')) {
+          var resize = document.createElement('button');
+          resize.type = 'button';
+          resize.className = 'slide-object-resize';
+          resize.setAttribute('aria-label', '缩放对象');
+          object.appendChild(resize);
+        }
+      });
+    }
+
+    function captureSnapshot() {
+      var clone = deckRoot.cloneNode(true);
+      removeTransient(clone);
+      return {
+        html: clone.innerHTML,
+        currentId: controls ? controls.currentSlideId() : (scopedSlides()[0] ? scopedSlides()[0].id : '')
+      };
+    }
+
+    function snapshotsDiffer(a, b) {
+      return !a || !b || a.html !== b.html;
+    }
+
+    function downloadText(filename, text) {
+      var blob = new Blob([text], { type: 'text/html;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+    }
+
+    function HistoryStack(apply) {
+      this.undoStack = [];
+      this.redoStack = [];
+      this.apply = apply;
+      this.onChange = function () {};
+    }
+
+    HistoryStack.prototype.push = function (before, after) {
+      if (!snapshotsDiffer(before, after)) return;
+      this.undoStack.push({ before: before, after: after });
+      if (this.undoStack.length > 60) this.undoStack.shift();
+      this.redoStack = [];
+      this.onChange();
+    };
+
+    HistoryStack.prototype.undo = function () {
+      var entry = this.undoStack.pop();
+      if (!entry) return;
+      this.redoStack.push(entry);
+      this.apply(entry.before);
+      this.onChange();
+    };
+
+    HistoryStack.prototype.redo = function () {
+      var entry = this.redoStack.pop();
+      if (!entry) return;
+      this.undoStack.push(entry);
+      this.apply(entry.after);
+      this.onChange();
+    };
+
+    function SlideDeck() {
+      this.index = 0;
+      this.observer = null;
+      this.wheelLock = false;
+      this.progress = document.getElementById('progressBar');
+      this.dots = document.getElementById('navDots');
+      this.bind();
+      this.refresh();
+    }
+
+    SlideDeck.prototype.bind = function () {
+      var self = this;
+      window.addEventListener('scroll', function () {
+        if (body.classList.contains('deck-edit-mode')) return;
+        window.requestAnimationFrame(function () {
+          var slides = scopedSlides();
+          if (!slides.length) return;
+          var nearest = 0;
+          var distance = Infinity;
+          slides.forEach(function (slide, index) {
+            var d = Math.abs(slide.getBoundingClientRect().top);
+            if (d < distance) { distance = d; nearest = index; }
+          });
+          if (nearest !== self.index) self.setCurrent(nearest, false);
+        });
+      }, { passive: true });
+
+      window.addEventListener('wheel', function (event) {
+        if (body.classList.contains('deck-edit-mode') || self.wheelLock) return;
+        if (event.target.closest('#slideSidebar, #rteToolbar, #deckAddElementMenu')) return;
+        if (Math.abs(event.deltaY) < 24) return;
+        event.preventDefault();
+        self.wheelLock = true;
+        self.go(self.index + (event.deltaY > 0 ? 1 : -1));
+        setTimeout(function () { self.wheelLock = false; }, 650);
+      }, { passive: false });
+
+      document.addEventListener('keydown', function (event) {
+        if (isTypingTarget(event.target) || body.classList.contains('deck-edit-mode')) return;
+        if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].indexOf(event.key) >= 0) {
+          event.preventDefault();
+          self.go(self.index + 1);
+        }
+        if (['ArrowUp', 'ArrowLeft', 'PageUp'].indexOf(event.key) >= 0) {
+          event.preventDefault();
+          self.go(self.index - 1);
+        }
+        if (event.key === 'Home') self.go(0);
+        if (event.key === 'End') self.go(scopedSlides().length - 1);
+      });
+    };
+
+    SlideDeck.prototype.refresh = function (preferredId) {
+      var self = this;
+      var slides = scopedSlides();
+      if (this.observer) this.observer.disconnect();
+      this.dots.innerHTML = '';
+      slides.forEach(function (slide, index) {
+        var dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', '前往第 ' + (index + 1) + ' 页');
+        dot.addEventListener('click', function () { self.go(index); });
+        self.dots.appendChild(dot);
+      });
+      if ('IntersectionObserver' in window) {
+        this.observer = new IntersectionObserver(function (entries) {
+          if (body.classList.contains('deck-edit-mode')) return;
+          var hit = entries.filter(function (entry) { return entry.isIntersecting; })
+            .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+          if (hit) self.setCurrent(scopedSlides().indexOf(hit.target), false);
+        }, { threshold: [0.55, 0.75] });
+        slides.forEach(function (slide) { self.observer.observe(slide); });
+      }
+      var preferredIndex = slides.findIndex(function (slide) { return slide.id === preferredId; });
+      this.setCurrent(preferredIndex >= 0 ? preferredIndex : clamp(this.index, 0, Math.max(0, slides.length - 1)), false);
+    };
+
+    SlideDeck.prototype.setCurrent = function (index, scroll) {
+      var slides = scopedSlides();
+      if (!slides.length) return;
+      this.index = clamp(index, 0, slides.length - 1);
+      slides.forEach(function (slide, i) { slide.classList.toggle('visible', i === index); });
+      Array.from(this.dots.children).forEach(function (dot, i) { dot.classList.toggle('active', i === index); });
+      this.progress.style.width = (((this.index + 1) / slides.length) * 100) + '%';
+      if (scroll) slides[this.index].scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      if (sidebar) sidebar.markCurrent();
+    };
+
+    SlideDeck.prototype.go = function (index) {
+      var slides = scopedSlides();
+      if (!slides.length) return;
+      this.setCurrent(clamp(index, 0, slides.length - 1), true);
+    };
+
+    SlideDeck.prototype.currentSlide = function () {
+      return scopedSlides()[this.index] || scopedSlides()[0];
+    };
+
+    SlideDeck.prototype.currentSlideId = function () {
+      var slide = this.currentSlide();
+      return slide ? slide.id : '';
+    };
+
+    function ObjectEditor(history) {
+      this.history = history;
+      this.selected = new Set();
+      this.drag = null;
+      this.textBefore = null;
+      this.bind();
+    }
+
+    ObjectEditor.prototype.bind = function () {
+      var self = this;
+      deckRoot.addEventListener('pointerdown', function (event) {
+        if (!body.classList.contains('deck-edit-mode')) return;
+        var object = event.target.closest('[data-slide-object]');
+        if (!object || !deckRoot.contains(object)) {
+          self.clear();
+          return;
+        }
+        if (event.target.closest('.slide-object-delete')) {
+          event.preventDefault();
+          self.removeObjects([object]);
+          return;
+        }
+        if (event.target.closest('.slide-object-resize')) {
+          event.preventDefault();
+          self.select(object, false);
+          self.startResize(event, object);
+          return;
+        }
+        var additive = event.metaKey || event.ctrlKey || event.shiftKey;
+        self.select(object, additive);
+        if (event.target.closest('.slide-object-move')) {
+          event.preventDefault();
+          self.startMove(event);
+        }
+      });
+
+      deckRoot.addEventListener('click', function (event) {
+        if (!body.classList.contains('deck-edit-mode')) return;
+        var object = event.target.closest('[data-slide-object]');
+        if (!object) return;
+        var text = event.target.closest('.slide-object-text');
+        if (text && !event.target.closest('button')) {
+          text.setAttribute('contenteditable', 'true');
+          text.focus({ preventScroll: true });
+          self.textBefore = captureSnapshot();
+          if (rte) rte.show(text);
+        }
+      });
+
+      deckRoot.addEventListener('focusout', function (event) {
+        var text = event.target.closest('.slide-object-text');
+        if (!text || !self.textBefore) return;
+        setTimeout(function () {
+          if (document.activeElement && document.activeElement.closest('#rteToolbar')) return;
+          text.setAttribute('contenteditable', 'false');
+          self.history.push(self.textBefore, captureSnapshot());
+          self.textBefore = null;
+          if (rte) rte.hide();
+          if (sidebar) sidebar.refresh();
+        }, 0);
+      }, true);
+
+      window.addEventListener('pointermove', function (event) { self.onPointerMove(event); });
+      window.addEventListener('pointerup', function () { self.endPointerAction(); });
+      window.addEventListener('pointercancel', function () { self.endPointerAction(); });
+
+      document.addEventListener('keydown', function (event) {
+        if (!body.classList.contains('deck-edit-mode') || isTypingTarget(event.target)) return;
+        if ((event.key === 'Delete' || event.key === 'Backspace') && self.selected.size) {
+          event.preventDefault();
+          self.removeObjects(Array.from(self.selected));
+        }
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.key) >= 0 && self.selected.size) {
+          event.preventDefault();
+          var before = captureSnapshot();
+          var step = event.shiftKey ? 1 : 0.2;
+          self.selected.forEach(function (object) {
+            var left = parseFloat(object.style.left) || 0;
+            var top = parseFloat(object.style.top) || 0;
+            if (event.key === 'ArrowLeft') left -= step;
+            if (event.key === 'ArrowRight') left += step;
+            if (event.key === 'ArrowUp') top -= step;
+            if (event.key === 'ArrowDown') top += step;
+            object.style.left = clamp(left, 0, 96) + '%';
+            object.style.top = clamp(top, 0, 96) + '%';
+          });
+          self.history.push(before, captureSnapshot());
+          if (sidebar) sidebar.refresh();
+        }
+      });
+    };
+
+    ObjectEditor.prototype.select = function (object, additive) {
+      if (!additive) this.clear();
+      if (additive && this.selected.has(object)) {
+        object.classList.remove('is-selected');
+        this.selected.delete(object);
+      } else {
+        object.classList.add('is-selected');
+        this.selected.add(object);
+      }
+    };
+
+    ObjectEditor.prototype.clear = function () {
+      this.selected.forEach(function (object) { object.classList.remove('is-selected'); });
+      this.selected.clear();
+      if (rte) rte.hide();
+    };
+
+    ObjectEditor.prototype.removeObjects = function (objects) {
+      if (objects.length > 1 && !window.confirm('删除选中的 ' + objects.length + ' 个对象？')) return;
+      var before = captureSnapshot();
+      objects.forEach(function (object) { object.remove(); });
+      this.clear();
+      this.history.push(before, captureSnapshot());
+      if (sidebar) sidebar.refresh();
+    };
+
+    ObjectEditor.prototype.startMove = function (event) {
+      var objects = Array.from(this.selected);
+      if (!objects.length) return;
+      this.drag = {
+        type: 'move',
+        startX: event.clientX,
+        startY: event.clientY,
+        before: captureSnapshot(),
+        layer: objects[0].closest('.slide-edit-layer'),
+        objects: objects.map(function (object) {
+          return { node: object, left: parseFloat(object.style.left) || 0, top: parseFloat(object.style.top) || 0 };
+        })
+      };
+    };
+
+    ObjectEditor.prototype.startResize = function (event, object) {
+      this.drag = {
+        type: 'resize',
+        startX: event.clientX,
+        startY: event.clientY,
+        before: captureSnapshot(),
+        layer: object.closest('.slide-edit-layer'),
+        node: object,
+        width: parseFloat(object.style.width) || (object.getBoundingClientRect().width / object.closest('.slide').clientWidth * 100),
+        height: parseFloat(object.style.height) || (object.getBoundingClientRect().height / object.closest('.slide').clientHeight * 100)
+      };
+    };
+
+    ObjectEditor.prototype.clearSnapLines = function () {
+      deckRoot.querySelectorAll('.snap-line-v, .snap-line-h').forEach(function (line) { line.remove(); });
+    };
+
+    ObjectEditor.prototype.showSnap = function (layer, axis, percent) {
+      var line = document.createElement('div');
+      line.className = axis === 'x' ? 'snap-line-v' : 'snap-line-h';
+      if (axis === 'x') line.style.left = percent + '%';
+      else line.style.top = percent + '%';
+      layer.appendChild(line);
+    };
+
+    ObjectEditor.prototype.snapValue = function (value, axis, layer, movingNodes) {
+      var candidates = [0, 50, 100];
+      layer.querySelectorAll('[data-slide-object]').forEach(function (other) {
+        if (movingNodes.indexOf(other) >= 0) return;
+        var base = parseFloat(axis === 'x' ? other.style.left : other.style.top) || 0;
+        var size = parseFloat(axis === 'x' ? other.style.width : other.style.height) || 0;
+        candidates.push(base, base + size / 2, base + size);
+      });
+      var nearest = null;
+      candidates.forEach(function (candidate) {
+        if (Math.abs(candidate - value) <= 0.65 && (nearest === null || Math.abs(candidate - value) < Math.abs(nearest - value))) nearest = candidate;
+      });
+      return nearest;
+    };
+
+    ObjectEditor.prototype.onPointerMove = function (event) {
+      if (!this.drag) return;
+      var rect = this.drag.layer.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      this.clearSnapLines();
+      if (this.drag.type === 'move') {
+        var dx = (event.clientX - this.drag.startX) / rect.width * 100;
+        var dy = (event.clientY - this.drag.startY) / rect.height * 100;
+        var primary = this.drag.objects[0];
+        var proposedX = primary.left + dx;
+        var proposedY = primary.top + dy;
+        var nodes = this.drag.objects.map(function (item) { return item.node; });
+        var snapX = this.snapValue(proposedX, 'x', this.drag.layer, nodes);
+        var snapY = this.snapValue(proposedY, 'y', this.drag.layer, nodes);
+        if (snapX !== null) { dx += snapX - proposedX; this.showSnap(this.drag.layer, 'x', snapX); }
+        if (snapY !== null) { dy += snapY - proposedY; this.showSnap(this.drag.layer, 'y', snapY); }
+        this.drag.objects.forEach(function (item) {
+          var width = parseFloat(item.node.style.width) || 4;
+          var height = parseFloat(item.node.style.height) || 4;
+          item.node.style.left = clamp(item.left + dx, 0, 100 - width) + '%';
+          item.node.style.top = clamp(item.top + dy, 0, 100 - height) + '%';
+        });
+      } else {
+        var dw = (event.clientX - this.drag.startX) / rect.width * 100;
+        var dh = (event.clientY - this.drag.startY) / rect.height * 100;
+        var left = parseFloat(this.drag.node.style.left) || 0;
+        var top = parseFloat(this.drag.node.style.top) || 0;
+        this.drag.node.style.width = clamp(this.drag.width + dw, 4, 100 - left) + '%';
+        this.drag.node.style.height = clamp(this.drag.height + dh, 4, 100 - top) + '%';
+      }
+    };
+
+    ObjectEditor.prototype.endPointerAction = function () {
+      if (!this.drag) return;
+      this.clearSnapLines();
+      this.history.push(this.drag.before, captureSnapshot());
+      this.drag = null;
+      if (sidebar) sidebar.refresh();
+    };
+
+    function RichTextToolbar(history) {
+      this.history = history;
+      this.root = document.getElementById('rteToolbar');
+      this.activeText = null;
+      this.before = null;
+      this.bind();
+    }
+
+    RichTextToolbar.prototype.bind = function () {
+      var self = this;
+      this.root.addEventListener('pointerdown', function (event) { event.preventDefault(); });
+      this.root.addEventListener('click', function (event) {
+        var command = event.target.closest('[data-rte-cmd]');
+        var opener = event.target.closest('[data-rte-open]');
+        var font = event.target.closest('[data-font]');
+        var scale = event.target.closest('[data-scale]');
+        var px = event.target.closest('[data-px]');
+        if (command) self.exec(command.dataset.rteCmd);
+        if (opener) self.togglePanel(opener.dataset.rteOpen);
+        if (font) self.applyStyle('fontFamily', font.dataset.font);
+        if (scale && self.activeText) {
+          var current = parseFloat(getComputedStyle(self.activeText).fontSize) || 24;
+          self.applyStyle('fontSize', (current * parseFloat(scale.dataset.scale)) + 'px');
+        }
+        if (px) self.applyStyle('fontSize', px.dataset.px + 'px');
+      });
+    };
+
+    RichTextToolbar.prototype.show = function (text) {
+      this.activeText = text;
+      var rect = text.getBoundingClientRect();
+      this.root.style.left = clamp(rect.left, 12, window.innerWidth - 300) + 'px';
+      this.root.style.top = clamp(rect.top - 48, 12, window.innerHeight - 140) + 'px';
+      this.root.classList.add('visible');
+    };
+
+    RichTextToolbar.prototype.hide = function () {
+      this.root.classList.remove('visible');
+      this.root.querySelectorAll('[data-rte-panel]').forEach(function (panel) { panel.hidden = true; });
+      this.activeText = null;
+    };
+
+    RichTextToolbar.prototype.togglePanel = function (name) {
+      this.root.querySelectorAll('[data-rte-panel]').forEach(function (panel) {
+        panel.hidden = panel.dataset.rtePanel !== name ? true : !panel.hidden;
+      });
+    };
+
+    RichTextToolbar.prototype.exec = function (command) {
+      if (!this.activeText) return;
+      var before = captureSnapshot();
+      this.activeText.focus({ preventScroll: true });
+      document.execCommand(command, false, null);
+      this.history.push(before, captureSnapshot());
+      if (sidebar) sidebar.refresh();
+    };
+
+    RichTextToolbar.prototype.applyStyle = function (property, value) {
+      if (!this.activeText) return;
+      var before = captureSnapshot();
+      var selection = window.getSelection();
+      if (selection && selection.rangeCount && !selection.isCollapsed && this.activeText.contains(selection.anchorNode)) {
+        var range = selection.getRangeAt(0);
+        var span = document.createElement('span');
+        span.style[property] = value;
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+        selection.removeAllRanges();
+        var newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        selection.addRange(newRange);
+      } else {
+        this.activeText.style[property] = value;
+      }
+      this.history.push(before, captureSnapshot());
+      if (sidebar) sidebar.refresh();
+    };
+
+    function PageSidebar(history) {
+      this.history = history;
+      this.root = document.getElementById('slideSidebar');
+      this.list = document.getElementById('filmstripList');
+      this.dragId = '';
+      this.dragBefore = null;
+      this.bind();
+    }
+
+    PageSidebar.prototype.bind = function () {
+      var self = this;
+      this.list.addEventListener('click', function (event) {
+        var item = event.target.closest('.filmstrip-item');
+        if (!item) return;
+        if (event.target.closest('.filmstrip-copy')) self.copy(item.dataset.slideId);
+        else if (event.target.closest('.filmstrip-delete')) self.deleteSlide(item.dataset.slideId);
+        else controls.go(scopedSlides().findIndex(function (slide) { return slide.id === item.dataset.slideId; }));
+      });
+      this.list.addEventListener('dragstart', function (event) {
+        var item = event.target.closest('.filmstrip-item');
+        if (!item) return;
+        self.dragId = item.dataset.slideId;
+        self.dragBefore = captureSnapshot();
+        item.classList.add('is-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      this.list.addEventListener('dragover', function (event) {
+        var item = event.target.closest('.filmstrip-item');
+        if (!item || item.dataset.slideId === self.dragId) return;
+        event.preventDefault();
+        self.list.querySelectorAll('.is-drop-target').forEach(function (node) { node.classList.remove('is-drop-target'); });
+        item.classList.add('is-drop-target');
+      });
+      this.list.addEventListener('drop', function (event) {
+        var item = event.target.closest('.filmstrip-item');
+        if (!item || !self.dragId) return;
+        event.preventDefault();
+        var source = scopedSlides().find(function (slide) { return slide.id === self.dragId; });
+        var target = scopedSlides().find(function (slide) { return slide.id === item.dataset.slideId; });
+        if (source && target && source !== target) deckRoot.insertBefore(source, target);
+        self.history.push(self.dragBefore, captureSnapshot());
+        controls.refresh(self.dragId);
+        self.refresh();
+      });
+      this.list.addEventListener('dragend', function () {
+        self.dragId = '';
+        self.dragBefore = null;
+        self.list.querySelectorAll('.is-dragging, .is-drop-target').forEach(function (node) {
+          node.classList.remove('is-dragging', 'is-drop-target');
+        });
+      });
+      document.getElementById('btnNewPage').addEventListener('click', function () { self.newPage(); });
+      document.getElementById('btnExport').addEventListener('click', function () { exportStandalone(); });
+    };
+
+    PageSidebar.prototype.makeThumb = function (slide, index) {
+      var item = document.createElement('div');
+      item.className = 'filmstrip-item';
+      item.draggable = true;
+      item.dataset.slideId = slide.id;
+      var host = document.createElement('div');
+      host.className = 'filmstrip-thumb-host';
+      var clone = slide.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.classList.remove('visible');
+      clone.querySelectorAll('.slide-object-move, .slide-object-delete, .slide-object-resize').forEach(function (node) { node.remove(); });
+      clone.style.position = 'absolute';
+      clone.style.left = '0';
+      clone.style.top = '0';
+      clone.style.width = '1280px';
+      clone.style.height = '720px';
+      clone.style.transformOrigin = 'top left';
+      clone.style.transform = 'scale(0.145)';
+      host.style.position = 'relative';
+      host.appendChild(clone);
+      var actions = document.createElement('div');
+      actions.className = 'filmstrip-actions';
+      var label = document.createElement('span');
+      label.textContent = String(index + 1).padStart(2, '0');
+      var copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'filmstrip-copy';
+      copy.textContent = 'Copy';
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'filmstrip-delete';
+      del.textContent = 'Delete';
+      actions.append(label, copy, del);
+      item.append(host, actions);
+      return item;
+    };
+
+    PageSidebar.prototype.refresh = function () {
+      var self = this;
+      this.list.innerHTML = '';
+      scopedSlides().forEach(function (slide, index) { self.list.appendChild(self.makeThumb(slide, index)); });
+      this.markCurrent();
+    };
+
+    PageSidebar.prototype.markCurrent = function () {
+      var id = controls ? controls.currentSlideId() : '';
+      this.list.querySelectorAll('.filmstrip-item').forEach(function (item) {
+        item.classList.toggle('is-current', item.dataset.slideId === id);
+      });
+    };
+
+    PageSidebar.prototype.copy = function (slideId) {
+      var original = scopedSlides().find(function (slide) { return slide.id === slideId; });
+      if (!original) return;
+      var before = captureSnapshot();
+      var clone = original.cloneNode(true);
+      clone.id = uid('slide');
+      clone.classList.remove('visible');
+      clone.querySelectorAll('[data-oid]').forEach(function (object) { object.dataset.oid = uid('obj'); });
+      clone.querySelectorAll('.slide-object-move, .slide-object-delete, .slide-object-resize').forEach(function (node) { node.remove(); });
+      clone.querySelectorAll('[contenteditable]').forEach(function (node) { node.setAttribute('contenteditable', 'false'); });
+      original.insertAdjacentElement('afterend', clone);
+      ensureObjectControls(clone);
+      this.history.push(before, captureSnapshot());
+      controls.refresh(clone.id);
+      this.refresh();
+      controls.go(scopedSlides().indexOf(clone));
+    };
+
+    PageSidebar.prototype.newPage = function () {
+      var before = captureSnapshot();
+      var slide = document.createElement('section');
+      slide.className = 'slide';
+      slide.id = uid('slide');
+      slide.setAttribute('aria-label', '新页面');
+      slide.innerHTML = '<div class="slide-index decorative" aria-hidden="true">+</div>' +
+        '<div class="deck-breadcrumb">Operator Planning <span>New page</span></div>' +
+        '<div class="slide-edit-layer" aria-hidden="false">' +
+        '<div class="slide-object" data-slide-object data-oid="' + uid('obj') + '" data-object-type="text" style="left:8%;top:18%;width:70%;">' +
+        '<div class="slide-object-text" contenteditable="false"><div class="slide-kicker">New story beat</div><div class="slide-title">输入这一页的核心结论</div></div></div></div>';
+      deckRoot.appendChild(slide);
+      ensureObjectControls(slide);
+      this.history.push(before, captureSnapshot());
+      controls.refresh(slide.id);
+      this.refresh();
+      controls.go(scopedSlides().length - 1);
+    };
+
+    PageSidebar.prototype.deleteSlide = function (slideId) {
+      var slides = scopedSlides();
+      if (slides.length <= 1) return;
+      if (!window.confirm('删除这一页？')) return;
+      var before = captureSnapshot();
+      var current = slides.find(function (slide) { return slide.id === slideId; });
+      if (!current) return;
+      var index = slides.indexOf(current);
+      current.remove();
+      this.history.push(before, captureSnapshot());
+      controls.refresh(scopedSlides()[Math.max(0, index - 1)].id);
+      this.refresh();
+    };
+
+    function applySnapshot(snapshot) {
+      if (!snapshot) return;
+      deckRoot.innerHTML = snapshot.html;
+      ensureObjectControls(deckRoot);
+      if (editor) editor.clear();
+      controls.refresh(snapshot.currentId);
+      if (sidebar) sidebar.refresh();
+    }
+
+    function serializeDeckState() {
+      var clone = deckRoot.cloneNode(true);
+      removeTransient(clone);
+      return { revision: Date.now(), deckHtml: clone.innerHTML, currentId: controls.currentSlideId() };
+    }
+
+    function saveLocalOnly() {
+      var state = serializeDeckState();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      var button = document.getElementById('btnSave');
+      var previous = button.textContent;
+      button.textContent = 'Saved';
+      setTimeout(function () { button.textContent = previous; }, 1000);
+      return state;
+    }
+
+    function buildStandaloneHtml() {
+      var state = serializeDeckState();
+      var rootClone = document.documentElement.cloneNode(true);
+      rootClone.querySelector('body').classList.remove('deck-edit-mode', 'deck-sidebar-open', 'deck-laser-mode', 'slide-anim-paused');
+      var clonedDeck = rootClone.querySelector('#deck');
+      removeTransient(clonedDeck);
+      var clonedFilmstrip = rootClone.querySelector('#filmstripList');
+      if (clonedFilmstrip) clonedFilmstrip.innerHTML = '';
+      var embedded = rootClone.querySelector('#deck-persisted-state');
+      if (embedded) embedded.textContent = JSON.stringify(state).replace(/</g, '\\u003c');
+      return '<!DOCTYPE html>\n' + rootClone.outerHTML;
+    }
+
+    function exportStandalone() {
+      saveLocalOnly();
+      downloadText('operator-planning-story-slides.html', buildStandaloneHtml());
+    }
+
+    function loadPersistedState() {
+      var candidates = [];
+      var embedded = document.getElementById('deck-persisted-state');
+      if (embedded && embedded.textContent.trim()) {
+        try { candidates.push(JSON.parse(embedded.textContent)); } catch (error) { console.warn('Embedded deck state is invalid.', error); }
+      }
+      try {
+        var local = localStorage.getItem(STORAGE_KEY);
+        if (local) candidates.push(JSON.parse(local));
+      } catch (error) { console.warn('Local deck state is unavailable.', error); }
+      candidates = candidates.filter(function (candidate) { return candidate && candidate.deckHtml; });
+      candidates.sort(function (a, b) { return (b.revision || 0) - (a.revision || 0); });
+      if (candidates[0]) deckRoot.innerHTML = candidates[0].deckHtml;
+      return candidates[0] || null;
+    }
+
+    var loadedState = loadPersistedState();
+    ensureObjectControls(deckRoot);
+    controls = new SlideDeck();
+    var history = new HistoryStack(applySnapshot);
+    rte = new RichTextToolbar(history);
+    editor = new ObjectEditor(history);
+    sidebar = new PageSidebar(history);
+    sidebar.refresh();
+    if (loadedState && loadedState.currentId) controls.refresh(loadedState.currentId);
+    body.dataset.runtimePhase = 'controllers-ready';
+
+    var editToggle = document.getElementById('editToggle');
+    var pagesToggle = document.getElementById('pagesToggle');
+    var laserToggle = document.getElementById('laserToggle');
+    var fullscreenToggle = document.getElementById('fullscreenToggle');
+    var leftHover = document.getElementById('deckLeftHover');
+    var addMenu = document.getElementById('deckAddElementMenu');
+    var hideTimer = null;
+
+    function updateHistoryButtons() {
+      document.getElementById('btnUndo').disabled = !history.undoStack.length;
+      document.getElementById('btnRedo').disabled = !history.redoStack.length;
+    }
+    history.onChange = updateHistoryButtons;
+    updateHistoryButtons();
+
+    function showChrome() {
+      leftHover.querySelectorAll('.deck-control').forEach(function (button) { button.classList.add('show'); });
+      document.getElementById('deckEditChrome').classList.add('show');
+    }
+
+    function hideChrome() {
+      leftHover.querySelectorAll('.deck-control').forEach(function (button) { button.classList.remove('show'); });
+      document.getElementById('deckEditChrome').classList.remove('show');
+      addMenu.classList.remove('open');
+    }
+
+    leftHover.addEventListener('pointerenter', function () {
+      clearTimeout(hideTimer);
+      showChrome();
+    });
+    leftHover.addEventListener('pointerleave', function () {
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(hideChrome, 400);
+    });
+    document.addEventListener('pointermove', function (event) {
+      var rect = leftHover.getBoundingClientRect();
+      if (event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        clearTimeout(hideTimer);
+        showChrome();
+      }
+    });
+
+    function setEditMode(active) {
+      body.classList.toggle('deck-edit-mode', active);
+      body.classList.toggle('slide-anim-paused', active);
+      editToggle.classList.toggle('active', active);
+      editToggle.textContent = active ? 'Editing' : 'Edit';
+      scopedSlides().forEach(function (slide) {
+        var layer = slide.querySelector(':scope > .slide-edit-layer');
+        if (layer) layer.setAttribute('aria-hidden', active ? 'false' : 'true');
+      });
+      if (active) {
+        setLaser(false);
+        body.classList.add('deck-sidebar-open');
+        pagesToggle.classList.add('active');
+        sidebar.refresh();
+        showChrome();
+      } else {
+        editor.clear();
+        rte.hide();
+        body.classList.remove('deck-sidebar-open');
+        pagesToggle.classList.remove('active');
+        addMenu.classList.remove('open');
+        controls.go(controls.index);
+      }
+    }
+
+    function setLaser(active) {
+      if (active && body.classList.contains('deck-edit-mode')) setEditMode(false);
+      body.classList.toggle('deck-laser-mode', active);
+      laserToggle.classList.toggle('active', active);
+      laserToggle.textContent = active ? 'Laser on' : 'Laser';
+      if (!active) document.getElementById('laserDot').style.transform = 'translate(-999px, -999px)';
+    }
+
+    editToggle.addEventListener('click', function () { setEditMode(!body.classList.contains('deck-edit-mode')); });
+    document.getElementById('btnDoneEdit').addEventListener('click', function () { setEditMode(false); });
+    pagesToggle.addEventListener('click', function () {
+      body.classList.toggle('deck-sidebar-open');
+      pagesToggle.classList.toggle('active', body.classList.contains('deck-sidebar-open'));
+      sidebar.refresh();
+    });
+    laserToggle.addEventListener('click', function () { setLaser(!body.classList.contains('deck-laser-mode')); });
+    document.addEventListener('pointermove', function (event) {
+      if (!body.classList.contains('deck-laser-mode')) return;
+      document.getElementById('laserDot').style.transform = 'translate(' + (event.clientX - 9) + 'px,' + (event.clientY - 9) + 'px)';
+    });
+
+    fullscreenToggle.addEventListener('click', function () {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(function () {});
+      else document.exitFullscreen().catch(function () {});
+    });
+    document.addEventListener('fullscreenchange', function () {
+      fullscreenToggle.classList.toggle('active', !!document.fullscreenElement);
+      fullscreenToggle.textContent = document.fullscreenElement ? 'Exit full' : 'Fullscreen';
+    });
+
+    document.getElementById('btnUndo').addEventListener('click', function () { history.undo(); });
+    document.getElementById('btnRedo').addEventListener('click', function () { history.redo(); });
+    document.getElementById('btnSave').addEventListener('click', saveLocalOnly);
+
+    document.getElementById('btnAddElement').addEventListener('click', function (event) {
+      var rect = event.currentTarget.getBoundingClientRect();
+      addMenu.style.left = rect.left + 'px';
+      addMenu.style.top = (rect.bottom + 8) + 'px';
+      addMenu.classList.toggle('open');
+    });
+
+    function addMediaObject(kind, dataUrl) {
+      var slide = controls.currentSlide();
+      var layer = slide.querySelector(':scope > .slide-edit-layer');
+      var before = captureSnapshot();
+      var object = document.createElement('div');
+      object.className = 'slide-object';
+      object.dataset.slideObject = '';
+      object.dataset.oid = uid('obj');
+      object.dataset.objectType = kind === 'text' ? 'text' : 'graphic';
+      object.style.cssText = kind === 'text' ? 'left:18%;top:24%;width:62%;' : 'left:22%;top:24%;width:56%;height:52%;';
+      if (kind === 'text') {
+        var text = document.createElement('div');
+        text.className = 'slide-object-text';
+        text.setAttribute('contenteditable', 'false');
+        text.innerHTML = '<div class="slide-kicker">New element</div><div class="slide-title">输入文字</div>';
+        object.appendChild(text);
+      } else {
+        var graphic = document.createElement('div');
+        graphic.className = 'slide-object-graphic';
+        var media = document.createElement(kind);
+        media.src = dataUrl;
+        media.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:12px;';
+        if (kind === 'video') media.controls = true;
+        graphic.appendChild(media);
+        object.appendChild(graphic);
+      }
+      layer.appendChild(object);
+      ensureObjectControls(object.parentElement);
+      history.push(before, captureSnapshot());
+      editor.select(object, false);
+      sidebar.refresh();
+      addMenu.classList.remove('open');
+    }
+
+    addMenu.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-add-kind]');
+      if (!button) return;
+      var kind = button.dataset.addKind;
+      if (kind === 'text') { addMediaObject('text', ''); return; }
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = kind === 'image' ? 'image/*' : 'video/*';
+      input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.addEventListener('load', function () { addMediaObject(kind, reader.result); });
+        reader.readAsDataURL(file);
+      });
+      input.click();
+    });
+
+    document.addEventListener('keydown', function (event) {
+      var mod = event.metaKey || event.ctrlKey;
+      if (event.key.toLowerCase() === 'e' && !mod && !isTypingTarget(event.target)) {
+        event.preventDefault();
+        setEditMode(!body.classList.contains('deck-edit-mode'));
+      }
+      if (event.key === 'Escape') {
+        if (body.classList.contains('deck-laser-mode')) setLaser(false);
+        else if (body.classList.contains('deck-edit-mode')) setEditMode(false);
+      }
+      if (mod && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        saveLocalOnly();
+      }
+      if (mod && event.key.toLowerCase() === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        history.undo();
+      }
+      if (mod && ((event.key.toLowerCase() === 'z' && event.shiftKey) || event.key.toLowerCase() === 'y')) {
+        event.preventDefault();
+        history.redo();
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('#deckAddElementMenu, #btnAddElement')) addMenu.classList.remove('open');
+    });
+
+    body.dataset.runtimePhase = 'ready';
+    window.__deckTest = {
+      scopedSlides: scopedSlides,
+      serializeDeckState: serializeDeckState,
+      buildStandaloneHtml: buildStandaloneHtml,
+      saveLocalOnly: saveLocalOnly,
+      clearDraft: function () { localStorage.removeItem(STORAGE_KEY); },
+      setEditMode: setEditMode
+    };
+  }());
+  </script>
+</body>
+</html>
