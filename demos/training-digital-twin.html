@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>训练孪生体控制台 · Run: atlas-70B-r3</title>
+<style>
+  :root{
+    --bg:#0c1015; --bg2:#0f141b; --panel:#151b24; --panel2:#1b232e;
+    --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+    --ink:#e7ecf3; --mut:#7e8a9c; --dim:#576070;
+    --teal:#34d399; --teal-d:#0c5e44;
+    --amber:#fbbf24; --amber-d:#6b4708;
+    --red:#f87171; --red-d:#6e1f1f;
+    --purple:#a78bfa; --purple-d:#3a2e7a;
+    --blue:#60a5fa; --blue-d:#1e3a6b;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+    background-image:radial-gradient(circle at 20% -10%,rgba(96,165,250,.06),transparent 40%),radial-gradient(circle at 90% 0,rgba(167,139,250,.05),transparent 35%);}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 18px 48px;}
+ 
+  /* header */
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 18px;background:var(--panel);
+    border:1px solid var(--line);border-radius:14px;}
+  .run{display:flex;flex-direction:column;gap:2px;}
+  .run h1{font-size:16px;font-weight:600;margin:0;letter-spacing:.2px;}
+  .run .meta{font-size:12px;color:var(--mut);}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;}
+  .pill.ok{background:var(--teal-d);color:var(--teal);}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  .sync{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--purple);
+    border:1px solid var(--purple-d);border-radius:999px;padding:5px 12px;background:rgba(167,139,250,.06);}
+  .sync .dot{background:var(--purple)}
+ 
+  /* vitals strip */
+  .vitals{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px;}
+  .vital{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .vital .k{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;}
+  .vital .v{font-size:22px;font-weight:600;margin-top:3px;font-family:var(--mono);}
+  .vital .s{font-size:11px;color:var(--dim);margin-top:1px;font-family:var(--mono);}
+  .vital .v small{font-size:12px;color:var(--mut);font-weight:400;margin-left:3px;}
+ 
+  /* layout grid */
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:14px;margin-top:14px;align-items:start;}
+  .col{display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;}
+  .card h2{font-size:13px;font-weight:600;margin:0 0 2px;display:flex;align-items:center;gap:8px;}
+  .card h2 .tag{font-size:10px;font-weight:600;color:var(--dim);border:1px solid var(--line2);border-radius:5px;padding:1px 6px;letter-spacing:.5px;text-transform:uppercase;}
+  .card .desc{font-size:11px;color:var(--dim);margin:0 0 12px;}
+ 
+  /* charts */
+  .chartrow{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;}
+  .chartbox .lbl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+  .chartbox .lbl .name{font-size:11px;color:var(--mut);}
+  .chartbox .lbl .now{font-size:14px;font-weight:600;font-family:var(--mono);}
+  svg.chart{width:100%;display:block;}
+ 
+  /* gpu heatmap */
+  .heat{display:grid;grid-template-columns:repeat(32,1fr);gap:2px;}
+  .cell{aspect-ratio:1;border-radius:2px;background:var(--teal-d);position:relative;}
+  .legend{display:flex;gap:14px;margin-top:11px;font-size:11px;color:var(--mut);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block;}
+ 
+  /* gauges / bars */
+  .bars{display:flex;flex-direction:column;gap:11px;}
+  .bar .top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+  .bar .top .val{font-family:var(--mono);color:var(--ink);}
+  .track{height:7px;background:var(--bg2);border-radius:6px;overflow:hidden;}
+  .fill{height:100%;border-radius:6px;transition:width .5s ease,background .5s;}
+ 
+  /* fault gauge */
+  .risk{display:flex;align-items:center;gap:18px;}
+  .risknum{font-size:40px;font-weight:700;font-family:var(--mono);line-height:1;}
+  .riskmeta{font-size:12px;color:var(--mut);}
+  .factors{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+  .factor{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+  .factor .ftrack{flex:1;margin:0 10px;height:5px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+  .factor .ffill{height:100%;background:var(--amber);}
+ 
+  /* event feed */
+  .feed{display:flex;flex-direction:column;gap:0;max-height:230px;overflow:auto;}
+  .ev{display:flex;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:12px;}
+  .ev:last-child{border-bottom:none;}
+  .ev .t{color:var(--dim);font-family:var(--mono);white-space:nowrap;flex:0 0 auto;}
+  .ev .sev{flex:0 0 auto;width:6px;border-radius:3px;}
+  .ev .msg{color:var(--ink);}
+  .ev.warn .msg{color:var(--amber);} .ev.warn .sev{background:var(--amber);}
+  .ev.crit .msg{color:var(--red);} .ev.crit .sev{background:var(--red);}
+  .ev.info .sev{background:var(--blue);} .ev.info .msg{color:var(--mut);}
+  .ev.ok .sev{background:var(--teal);} .ev.ok .msg{color:var(--teal);}
+ 
+  /* data pipeline */
+  .pipe{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  .mix{margin-top:4px;}
+  .mixrow{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px;}
+  .mixrow .nm{width:62px;color:var(--mut);}
+  .mixbar{flex:1;height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+  .mixbar i{display:block;height:100%;background:var(--blue);border-radius:4px;}
+  .mixrow .pc{font-family:var(--mono);color:var(--ink);width:36px;text-align:right;}
+ 
+  /* what-if */
+  .ctrl{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px;}
+  .ctrl .field label{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-bottom:6px;}
+  .ctrl .field label b{color:var(--purple);font-family:var(--mono);font-weight:600;}
+  input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;background:var(--bg2);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--purple);cursor:pointer;border:2px solid var(--panel);}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--purple);cursor:pointer;border:2px solid var(--panel);}
+  .outgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;}
+  .out{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;}
+  .out .k{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;}
+  .out .v{font-size:18px;font-weight:600;font-family:var(--mono);margin-top:3px;}
+  .out .d{font-size:11px;font-family:var(--mono);margin-top:2px;}
+  .up{color:var(--teal)} .down{color:var(--red)} .flat{color:var(--dim)}
+  .note{font-size:11px;color:var(--dim);margin-top:13px;line-height:1.6;}
+ 
+  @media(max-width:1080px){.grid{grid-template-columns:1fr}.vitals{grid-template-columns:repeat(3,1fr)}.chartrow{grid-template-columns:1fr}.heat{grid-template-columns:repeat(32,1fr)}}
+  @media(max-width:640px){.vitals{grid-template-columns:repeat(2,1fr)}.ctrl,.outgrid,.pipe{grid-template-columns:1fr 1fr}.outgrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ 
+  <header>
+    <div class="run">
+      <h1>训练孪生体控制台</h1>
+      <div class="meta mono">run <b style="color:var(--ink)">atlas-70B-r3</b> · 70B dense · seq 8192 · 512×H100</div>
+    </div>
+    <span class="pill ok"><span class="dot"></span>TRAINING</span>
+    <div class="sync"><span class="dot"></span>孪生镜像同步 · <span id="syncLag" class="mono">12</span>ms 前 · 回灌校准 OK</div>
+  </header>
+ 
+  <!-- vitals -->
+  <div class="vitals">
+    <div class="vital"><div class="k">Step</div><div class="v" id="vStep">—</div><div class="s" id="vStepSub">—</div></div>
+    <div class="vital"><div class="k">Train loss</div><div class="v" id="vLoss">—</div><div class="s" id="vLossSub">—</div></div>
+    <div class="vital"><div class="k">MFU</div><div class="v" id="vMfu">—</div><div class="s">model flops util</div></div>
+    <div class="vital"><div class="k">Throughput</div><div class="v" id="vTok">—</div><div class="s">tokens / sec</div></div>
+    <div class="vital"><div class="k">Tokens seen</div><div class="v" id="vSeen">—</div><div class="s" id="vSeenSub">—</div></div>
+    <div class="vital"><div class="k">ETA</div><div class="v" id="vEta">—</div><div class="s">至 3.0T tokens</div></div>
+  </div>
+ 
+  <div class="grid">
+    <!-- LEFT COLUMN -->
+    <div class="col">
+ 
+      <!-- training dynamics -->
+      <div class="card">
+        <h2>训练动态 · 模型层 <span class="tag">dim 3</span></h2>
+        <p class="desc">loss / 梯度 / 学习率 / MFU 实时曲线 — 孪生体据此判断收敛健康度并捕捉 loss spike</p>
+        <div class="chartrow">
+          <div class="chartbox">
+            <div class="lbl"><span class="name">Train / Val loss</span><span class="now" id="lossNow" style="color:var(--teal)">—</span></div>
+            <svg class="chart" id="lossChart" viewBox="0 0 320 110" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="chartbox">
+            <div class="lbl"><span class="name">MFU %</span><span class="now mono" id="mfuNow" style="color:var(--purple)">—</span></div>
+            <svg class="chart" id="mfuChart" viewBox="0 0 150 110" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="chartbox">
+            <div class="lbl"><span class="name">Grad norm</span><span class="now mono" id="gnNow" style="color:var(--amber)">—</span></div>
+            <svg class="chart" id="gnChart" viewBox="0 0 150 110" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- gpu cluster -->
+      <div class="card">
+        <h2>硬件 · 基础设施层 <span class="tag">dim 1</span></h2>
+        <p class="desc">512×H100 · 64 节点 — 单元格按结温着色，红色为降频/掉卡风险</p>
+        <div class="heat" id="heat"></div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--teal-d)"></i>&lt;72°C</span>
+          <span><i class="sw" style="background:var(--amber)"></i>72–82°C</span>
+          <span><i class="sw" style="background:var(--red)"></i>&gt;82°C / 异常</span>
+          <span style="margin-left:auto" id="heatStat" class="mono"></span>
+        </div>
+      </div>
+ 
+      <!-- system / software -->
+      <div class="card">
+        <h2>系统 · 软件运行层 <span class="tag">dim 2</span></h2>
+        <p class="desc">并行配置 TP4·PP4·DP32 · NCCL 集合通信与显存占用</p>
+        <div class="bars" id="sysBars"></div>
+      </div>
+ 
+    </div>
+ 
+    <!-- RIGHT COLUMN -->
+    <div class="col">
+ 
+      <!-- fault prediction -->
+      <div class="card">
+        <h2>预测 · 故障预警 <span class="tag">twin · forecast</span></h2>
+        <p class="desc">代理模型综合多维信号，给出未来 30 分钟中断概率</p>
+        <div class="risk">
+          <div class="risknum" id="riskNum">—</div>
+          <div>
+            <div id="riskLabel" style="font-weight:600">—</div>
+            <div class="riskmeta">30-min 中断概率 · 置信 87%</div>
+          </div>
+        </div>
+        <div class="factors" id="factors"></div>
+      </div>
+ 
+      <!-- event feed -->
+      <div class="card">
+        <h2>可靠性 · 运维事件 <span class="tag">dim 7</span></h2>
+        <p class="desc">异常 / 重启 / 抢占 / straggler 实时流</p>
+        <div class="feed" id="feed"></div>
+      </div>
+ 
+      <!-- data pipeline -->
+      <div class="card">
+        <h2>数据管道层 <span class="tag">dim 4</span></h2>
+        <p class="desc">配比 · 加载吞吐 · 序列长度分布</p>
+        <div class="pipe">
+          <div>
+            <div style="font-size:11px;color:var(--mut);margin-bottom:7px">数据混合配比</div>
+            <div class="mix" id="mix"></div>
+          </div>
+          <div class="bars" id="dataBars"></div>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+ 
+  <!-- WHAT-IF -->
+  <div class="card" style="margin-top:14px">
+    <h2>What-if · 配置 / 扩容推演 <span class="tag">dim 5 · twin sim</span></h2>
+    <p class="desc">调整并行与批处理配置，孪生体预测吞吐、MFU、训练时长与成本（相对当前运行的变化）</p>
+    <div class="ctrl">
+      <div class="field"><label>张量并行 TP <b id="lTP">4</b></label><input type="range" id="rTP" min="0" max="3" value="2"></div>
+      <div class="field"><label>流水并行 PP <b id="lPP">4</b></label><input type="range" id="rPP" min="0" max="4" value="2"></div>
+      <div class="field"><label>数据并行 DP <b id="lDP">32</b></label><input type="range" id="rDP" min="1" max="64" value="32"></div>
+      <div class="field"><label>Micro-batch <b id="lMB">2</b></label><input type="range" id="rMB" min="0" max="3" value="1"></div>
+      <div class="field"><label>梯度累积 <b id="lGA">8</b></label><input type="range" id="rGA" min="0" max="5" value="3"></div>
+      <div class="field"><label>GPU 单价 $/h <b id="lPR">2.5</b></label><input type="range" id="rPR" min="10" max="40" value="25"></div>
+    </div>
+    <div class="outgrid">
+      <div class="out"><div class="k">集群规模 GPUs</div><div class="v" id="oWorld">—</div><div class="d flat" id="dWorld">—</div></div>
+      <div class="out"><div class="k">预测 MFU</div><div class="v" id="oMfu">—</div><div class="d" id="dMfu">—</div></div>
+      <div class="out"><div class="k">预测吞吐 tok/s</div><div class="v" id="oTok">—</div><div class="d" id="dTok">—</div></div>
+      <div class="out"><div class="k">全局 batch</div><div class="v" id="oBatch">—</div><div class="d flat" id="dBatch">—</div></div>
+      <div class="out"><div class="k">预计剩余时长</div><div class="v" id="oEta">—</div><div class="d" id="dEta">—</div></div>
+      <div class="out"><div class="k">剩余 GPU·小时</div><div class="v" id="oGh">—</div><div class="d" id="dGh">—</div></div>
+      <div class="out"><div class="k">剩余算力成本</div><div class="v" id="oCost">—</div><div class="d" id="dCost">—</div></div>
+      <div class="out"><div class="k">流水 bubble</div><div class="v" id="oBub">—</div><div class="d flat">PP 气泡占比</div></div>
+    </div>
+    <p class="note">模型为演示用简化代理：MFU 随 TP 通信开销与 PP 气泡下降，micro-batch 过小损失核效率；真实孪生体会用历史 run 校准这些系数。当前基线 TP4·PP4·DP32 · MFU≈51% · 512 GPU。</p>
+  </div>
+ 
+</div>
+ 
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const rand=(a,b)=>a+Math.random()*(b-a);
+ 
+  // ---- formatters ----
+  function fmtBig(n){ if(n>=1e12)return (n/1e12).toFixed(2)+'T'; if(n>=1e9)return (n/1e9).toFixed(2)+'B'; if(n>=1e6)return (n/1e6).toFixed(1)+'M'; if(n>=1e3)return (n/1e3).toFixed(1)+'k'; return Math.round(n).toString(); }
+  function fmtTime(s){ s=Math.max(0,s); const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60); if(d>0)return d+'d '+h+'h'; if(h>0)return h+'h '+m+'m'; return m+'m'; }
+  function fmtMoney(n){ if(n>=1e6)return '$'+(n/1e6).toFixed(2)+'M'; if(n>=1e3)return '$'+(n/1e3).toFixed(1)+'k'; return '$'+Math.round(n); }
+ 
+  // ---- state ----
+  const S={
+    step:48230, totalSteps:120000,
+    seen:1.31e12, target:3.0e12,
+    loss:2.182, lossEMA:2.182, val:2.246,
+    mfu:0.512, gn:0.84, lr:2.4e-4,
+    world:512, params:70e9, peak:989e12,
+    hist:{loss:[],val:[],mfu:[],gn:[]},
+    gpus:[], spike:0, riskHist:0.08
+  };
+  const N=512, COLS=32;
+  for(let i=0;i<N;i++){ S.gpus.push({util:rand(.88,.99),temp:rand(58,70),mem:rand(.74,.86),ecc:0,bad:false}); }
+  // seed a few warm + one straggler
+  S.gpus[37].temp=84; S.gpus[37].bad='straggler'; S.gpus[37].util=.71;
+  S.gpus[201].temp=78; S.gpus[330].temp=76;
+ 
+  // seed history (~96 pts) with realistic decay
+  for(let i=0;i<96;i++){
+    const t=i/96;
+    const l=2.55-0.42*t+ (Math.random()-.5)*0.04;
+    S.hist.loss.push(l);
+    S.hist.val.push(l+0.06+(Math.random()-.5)*0.02);
+    S.hist.mfu.push(0.51+(Math.random()-.5)*0.05);
+    S.hist.gn.push(0.8+(Math.random()-.5)*0.25);
+  }
+  S.loss=S.hist.loss[95]; S.lossEMA=S.loss;
+ 
+  // ---- svg line drawing ----
+  function path(data,W,H,pad){
+    pad=pad||4; let mn=Math.min(...data),mx=Math.max(...data); if(mx-mn<1e-6)mx=mn+1;
+    const n=data.length;
+    return data.map((v,i)=>{
+      const x=pad+(W-2*pad)*i/(n-1);
+      const y=H-pad-(H-2*pad)*(v-mn)/(mx-mn);
+      return (i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);
+    }).join(' ');
+  }
+  function drawChart(svg,series){
+    const vb=svg.getAttribute('viewBox').split(' '),W=+vb[2],H=+vb[3];
+    let html='';
+    // grid baseline
+    html+='<line x1="0" y1="'+(H-4)+'" x2="'+W+'" y2="'+(H-4)+'" stroke="rgba(255,255,255,.06)"/>';
+    series.forEach(s=>{
+      const d=path(s.data,W,H,5);
+      if(s.fill){
+        const area=d+' L'+(W-5)+' '+(H-5)+' L5 '+(H-5)+' Z';
+        html+='<path d="'+area+'" fill="'+s.color+'" opacity=".10"/>';
+      }
+      html+='<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.w||1.6)+'" stroke-linejoin="round" stroke-linecap="round" opacity="'+(s.op||1)+'"/>';
+    });
+    svg.innerHTML=html;
+  }
+ 
+  // ---- heatmap ----
+  const heat=$('heat');
+  for(let i=0;i<N;i++){ const c=document.createElement('div'); c.className='cell'; heat.appendChild(c); }
+  const cells=heat.children;
+  function tempColor(t,bad){
+    if(bad)return 'var(--red)';
+    if(t>82)return 'var(--red)';
+    if(t>72)return 'var(--amber)';
+    // interpolate teal darkness by util
+    return 'var(--teal-d)';
+  }
+  function renderHeat(){
+    let mx=0,nbad=0,avg=0;
+    for(let i=0;i<N;i++){ const g=S.gpus[i]; const c=cells[i];
+      c.style.background=tempColor(g.temp,g.bad);
+      c.style.boxShadow = g.bad ? '0 0 0 1px var(--red)' : 'none';
+      c.title='GPU '+i+' · node-'+(i>>3)+' · '+g.temp.toFixed(0)+'°C · util '+(g.util*100).toFixed(0)+'% · HBM '+(g.mem*100).toFixed(0)+'%'+(g.bad?' · '+g.bad:'');
+      mx=Math.max(mx,g.temp); avg+=g.temp; if(g.temp>82||g.bad)nbad++;
+    }
+    $('heatStat').textContent='peak '+mx.toFixed(0)+'°C · avg '+(avg/N).toFixed(0)+'°C · 异常 '+nbad;
+  }
+ 
+  // ---- system bars ----
+  function bar(name,val,pct,color){
+    return '<div class="bar"><div class="top"><span style="color:var(--mut)">'+name+'</span><span class="val">'+val+'</span></div>'+
+      '<div class="track"><div class="fill" style="width:'+clamp(pct,0,100)+'%;background:'+color+'"></div></div></div>';
+  }
+ 
+  // ---- data mix ----
+  const MIX=[['Web',43,'var(--blue)'],['Code',22,'var(--purple)'],['书籍/论文',16,'var(--teal)'],['多语种',13,'var(--amber)'],['数学',6,'var(--red)']];
+  $('mix').innerHTML=MIX.map(m=>'<div class="mixrow"><span class="nm">'+m[0]+'</span><span class="mixbar"><i style="width:'+m[1]+'%;background:'+m[2]+'"></i></span><span class="pc">'+m[1]+'%</span></div>').join('');
+ 
+  // ---- event feed ----
+  const feed=$('feed'); const EVB=[
+    ['info','checkpoint 写入完成 · step {s} · 用时 41s'],
+    ['ok','NCCL all-reduce 带宽恢复至 388 GB/s'],
+    ['info','数据分片 shard-{r} 预取完成'],
+    ['warn','node-{r} GPU{g} 结温 84°C · 触发降频预警'],
+    ['warn','straggler 检测 · node-37 落后 1.8× · 平均步长'],
+    ['info','梯度同步耗时 11.2ms · overlap 92%'],
+    ['ok','EMA loss 持续下降 · 收敛正常'],
+    ['warn','dataloader 等待 6.3% · I/O 轻度瓶颈'],
+  ];
+  function clock(){ const d=new Date(); return d.toTimeString().slice(0,8); }
+  function pushEvent(sev,msg){
+    const el=document.createElement('div'); el.className='ev '+sev;
+    el.innerHTML='<span class="t">'+clock()+'</span><span class="sev"></span><span class="msg">'+msg+'</span>';
+    feed.insertBefore(el,feed.firstChild);
+    while(feed.children.length>40)feed.removeChild(feed.lastChild);
+  }
+  function seedEvents(){ for(let i=0;i<6;i++){ const e=EVB[Math.floor(rand(0,EVB.length))]; const msg=e[1].replace('{s}',(S.step-i*40)).replace('{r}',Math.floor(rand(0,64))).replace('{g}',Math.floor(rand(0,8))); pushEvent(e[0],msg); } }
+ 
+  // ---- fault risk ----
+  function computeRisk(){
+    let mx=0,bad=0,warm=0; for(const g of S.gpus){ mx=Math.max(mx,g.temp); if(g.bad)bad++; if(g.temp>78)warm++; }
+    const fThermal=clamp((mx-72)/18,0,1);
+    const fStrag=clamp(bad*0.4,0,1);
+    const fSpike=clamp(S.spike,0,1);
+    const fEcc=clamp(warm/14,0,1);
+    let r=0.04+0.45*fThermal+0.30*fStrag+0.30*fSpike+0.12*fEcc;
+    r=clamp(r,0.02,0.97);
+    S.riskHist=S.riskHist*0.6+r*0.4;
+    return {r:S.riskHist,f:[['热/降频',fThermal],['Straggler',fStrag],['Loss spike',fSpike],['ECC/告警',fEcc]]};
+  }
+  function renderRisk(){
+    const {r,f}=computeRisk(); const pct=Math.round(r*100);
+    const col = r>0.5?'var(--red)': r>0.22?'var(--amber)':'var(--teal)';
+    const lab = r>0.5?'高 · 建议预防性 checkpoint': r>0.22?'中 · 持续观察':'低 · 稳定';
+    $('riskNum').textContent=pct+'%'; $('riskNum').style.color=col;
+    $('riskLabel').textContent=lab; $('riskLabel').style.color=col;
+    $('factors').innerHTML=f.map(x=>'<div class="factor"><span style="color:var(--mut);width:78px">'+x[0]+'</span><span class="ftrack"><i class="ffill" style="width:'+Math.round(x[1]*100)+'%;background:'+col+'"></i></span><span class="mono" style="width:34px;text-align:right;color:var(--ink)">'+Math.round(x[1]*100)+'%</span></div>').join('');
+  }
+ 
+  // ---- main tick ----
+  function tick(){
+    S.step+=2;
+    // loss dynamics + occasional spike
+    if(Math.random()<0.03 && S.spike<0.2){ S.spike=rand(0.5,1); pushEvent('crit','⚠ loss spike 检测 · '+(S.loss+rand(.1,.3)).toFixed(3)+' · 孪生体上调中断概率'); }
+    let target=Math.max(1.55, S.lossEMA-0.0008);
+    S.loss=target + (Math.random()-.5)*0.03 + S.spike*rand(.05,.2);
+    S.lossEMA=S.lossEMA*0.98+S.loss*0.02;
+    S.spike*=0.78;
+    S.val=S.lossEMA+0.06+(Math.random()-.5)*0.015;
+    S.mfu=clamp(0.512+(Math.random()-.5)*0.04 - S.spike*0.05 - (S.gpus[37].bad?0.015:0),0.3,0.62);
+    S.gn=clamp(0.82+(Math.random()-.5)*0.3+S.spike*1.5,0.2,4);
+    S.seen+=S.mfu*S.world*S.peak/(6*S.params)*1; // ~tokens this tick
+ 
+    // gpu thermal drift
+    for(const g of S.gpus){ g.temp=clamp(g.temp+(Math.random()-.5)*1.4 + (g.bad?0.3:0) ,52,92); g.util=clamp(g.util+(Math.random()-.5)*0.03,.5,1); }
+    if(Math.random()<0.04){ const i=Math.floor(rand(0,N)); S.gpus[i].temp=clamp(S.gpus[i].temp+rand(4,9),52,92); }
+ 
+    // history push
+    S.hist.loss.push(S.loss); S.hist.val.push(S.val); S.hist.mfu.push(S.mfu*100); S.hist.gn.push(S.gn);
+    for(const k in S.hist){ if(S.hist[k].length>96)S.hist[k].shift(); }
+ 
+    // random events
+    if(Math.random()<0.5){ const e=EVB[Math.floor(rand(0,EVB.length))]; pushEvent(e[0],e[1].replace('{s}',S.step).replace('{r}',Math.floor(rand(0,64))).replace('{g}',Math.floor(rand(0,8)))); }
+ 
+    render();
+  }
+ 
+  function render(){
+    const tokps=S.mfu*S.world*S.peak/(6*S.params);
+    const eta=(S.target-S.seen)/tokps;
+    // vitals
+    $('vStep').textContent=S.step.toLocaleString(); $('vStepSub').textContent='/ '+S.totalSteps.toLocaleString()+' · '+(S.step/S.totalSteps*100).toFixed(1)+'%';
+    $('vLoss').textContent=S.loss.toFixed(3); $('vLossSub').textContent='val '+S.val.toFixed(3)+' · ema '+S.lossEMA.toFixed(3);
+    $('vLoss').style.color = S.spike>0.3?'var(--red)':'var(--ink)';
+    $('vMfu').innerHTML=(S.mfu*100).toFixed(1)+'<small>%</small>';
+    $('vTok').textContent=fmtBig(tokps);
+    $('vSeen').textContent=fmtBig(S.seen); $('vSeenSub').textContent='/ 3.0T · '+(S.seen/S.target*100).toFixed(1)+'%';
+    $('vEta').textContent=fmtTime(eta);
+ 
+    // charts
+    $('lossNow').textContent=S.loss.toFixed(3);
+    $('mfuNow').textContent=(S.mfu*100).toFixed(1)+'%';
+    $('gnNow').textContent=S.gn.toFixed(2);
+    drawChart($('lossChart'),[
+      {data:S.hist.val,color:'var(--dim)',w:1.2,op:.7},
+      {data:S.hist.loss,color:'var(--teal)',fill:true,w:1.8}
+    ]);
+    drawChart($('mfuChart'),[{data:S.hist.mfu,color:'var(--purple)',fill:true,w:1.6}]);
+    drawChart($('gnChart'),[{data:S.hist.gn,color:'var(--amber)',w:1.6}]);
+ 
+    renderHeat();
+    renderRisk();
+ 
+    // system bars
+    const hbm=78+ (Math.random()-.5)*3, nvl=rand(360,420), net=rand(180,210), nccl=rand(8,14), frag=rand(4,9);
+    $('sysBars').innerHTML=
+      bar('HBM 显存占用','80.4 / 80 GB · '+hbm.toFixed(0)+'%',hbm,'var(--blue)')+
+      bar('NVLink 带宽',nvl.toFixed(0)+' GB/s',nvl/450*100,'var(--teal)')+
+      bar('IB 网络吞吐',net.toFixed(0)+' Gbps',net/200*100,'var(--purple)')+
+      bar('NCCL all-reduce 耗时',nccl.toFixed(1)+' ms',100-nccl*4,'var(--amber)')+
+      bar('显存碎片率',frag.toFixed(1)+'%',frag*4,'var(--mut)');
+ 
+    // data bars
+    const load=rand(580,640), prep=rand(2.1,3.4), wait=rand(2,7);
+    $('dataBars').innerHTML=
+      bar('加载吞吐',load.toFixed(0)+'k tok/s',load/700*100,'var(--blue)')+
+      bar('预处理耗时',prep.toFixed(1)+' ms/batch',100-prep*15,'var(--teal)')+
+      bar('dataloader 等待',wait.toFixed(1)+'%',100-wait*6,'var(--amber)')+
+      bar('平均序列长度','7.6k / 8k tokens',95,'var(--purple)');
+ 
+    $('syncLag').textContent=Math.floor(rand(8,22));
+  }
+ 
+  // ---- what-if ----
+  const TPv=[1,2,4,8], PPv=[1,2,4,8,16], MBv=[1,2,4,8], GAv=[1,2,4,8,16,32];
+  const baseline={mfu:0.512,world:512,tokps:0,eta:0,gh:0,cost:0,batch:512};
+  function modelMFU(c){
+    let m=0.58;
+    m-=(c.TP-1)*0.012;                       // tensor-parallel comm overhead
+    const bubble=(c.PP-1)/(c.GA+c.PP-1);     // pipeline bubble
+    m*=(1-bubble*0.6);
+    if(c.MB<2)m*=0.90;                        // tiny micro-batch hurts kernel eff
+    m-=Math.max(0,(c.TP*c.PP-16))*0.004;
+    return {mfu:clamp(m,0.12,0.62),bubble};
+  }
+  function whatif(){
+    const c={TP:TPv[+$('rTP').value],PP:PPv[+$('rPP').value],DP:+$('rDP').value,MB:MBv[+$('rMB').value],GA:GAv[+$('rGA').value],price:(+$('rPR').value)/10};
+    $('lTP').textContent=c.TP; $('lPP').textContent=c.PP; $('lDP').textContent=c.DP; $('lMB').textContent=c.MB; $('lGA').textContent=c.GA; $('lPR').textContent=c.price.toFixed(1);
+    const world=c.TP*c.PP*c.DP;
+    const {mfu,bubble}=modelMFU(c);
+    const tokps=world*S.peak*mfu/(6*S.params);
+    const batch=c.DP*c.MB*c.GA;
+    const remaining=S.target-S.seen;
+    const eta=remaining/tokps;
+    const gh=world*eta/3600;
+    const cost=gh*c.price;
+ 
+    function delta(id,cur,base,inv,fmt){
+      const e=$(id); if(base===0){e.textContent='—';e.className='d flat';return;}
+      const pc=(cur-base)/base*100; const good = inv? pc<0 : pc>0;
+      e.textContent=(pc>=0?'+':'')+pc.toFixed(0)+'% vs 当前';
+      e.className='d '+(Math.abs(pc)<0.5?'flat':(good?'up':'down'));
+    }
+    $('oWorld').textContent=world; $('dWorld').textContent=(world-512>=0?'+':'')+(world-512)+' GPU';
+    $('dWorld').className='d '+(world===512?'flat':(world>512?'down':'up'));
+    $('oMfu').textContent=(mfu*100).toFixed(1)+'%'; delta('dMfu',mfu,baseline.mfu,false);
+    $('oTok').textContent=fmtBig(tokps); delta('dTok',tokps,baseline.tokps,false);
+    $('oBatch').textContent=batch; $('dBatch').textContent=(batch-512>=0?'+':'')+(batch-512)+' samples';
+    $('oEta').textContent=fmtTime(eta); delta('dEta',eta,baseline.eta,true);
+    $('oGh').textContent=fmtBig(gh); delta('dGh',gh,baseline.gh,true);
+    $('oCost').textContent=fmtMoney(cost); delta('dCost',cost,baseline.cost,true);
+    $('oBub').textContent=(bubble*100).toFixed(0)+'%';
+  }
+  ['rTP','rPP','rDP','rMB','rGA','rPR'].forEach(id=>$(id).addEventListener('input',whatif));
+  // set baseline from default config
+  (function(){ const c={TP:4,PP:4,DP:32,MB:2,GA:8,price:2.5}; const world=c.TP*c.PP*c.DP; const {mfu}=modelMFU(c);
+    const tokps=world*S.peak*mfu/(6*S.params); const eta=(S.target-S.seen)/tokps;
+    baseline.world=world;baseline.mfu=mfu;baseline.tokps=tokps;baseline.eta=eta;baseline.gh=world*eta/3600;baseline.cost=baseline.gh*c.price;baseline.batch=c.DP*c.MB*c.GA;
+  })();
+ 
+  // boot
+  seedEvents(); render(); whatif();
+  setInterval(tick,1200);
+})();
+</script>
+</body>
+</html>
