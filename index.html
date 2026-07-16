@@ -5,8 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#060911">
   <meta name="description" content="Seetasu 的交互式 Ascend C / CANN 设计实验室与 Demo 工作台。">
+  <link rel="canonical" href="https://seetasu.github.io/">
   <link rel="icon" href="data:,">
   <title>SEETASU // DEMO MISSION CONTROL</title>
+  <script>
+    (function refreshStaleBuild() {
+      if (!/^https?:$/.test(window.location.protocol)) return;
+
+      const pageUrl = new URL(window.location.href);
+      const manifestUrl = new URL('version.json', document.baseURI);
+      manifestUrl.searchParams.set('cache-bust', String(Math.floor(Date.now() / 30000)));
+
+      window.fetch(manifestUrl, { cache: 'no-store' })
+        .then((response) => {
+          if (!response.ok) throw new Error('Version manifest unavailable');
+          return response.json();
+        })
+        .then((manifest) => {
+          const revision = String(manifest.revision || '').trim();
+          if (!/^[0-9a-f]{40}$/i.test(revision)) return;
+
+          const version = revision.slice(0, 12);
+          if (pageUrl.searchParams.get('v') === version) return;
+
+          pageUrl.searchParams.set('v', version);
+          window.location.replace(pageUrl);
+        })
+        .catch(() => {});
+    }());
+  </script>
   <style>
     :root {
       --ink: #f3f7ff;
