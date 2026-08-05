@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="zh-Hans" data-mobile-adaptation="desktop-default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Source-to-Instruction Flow｜内部沟通</title>
+  <style>
+    /* ===========================================
+       THEME — COBALT GRID
+       =========================================== */
+    :root {
+      --paper: #F0EBDE;
+      --paper-2: #E6E0CE;
+      --ink: #1F2BE0;
+      --ink-soft: #5560E5;
+      --grid-line: rgba(31, 43, 224, 0.10);
+      --rule-soft: rgba(31, 43, 224, 0.22);
+      --font-display: Georgia, "Songti SC", "STSong", serif;
+      --font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-normal: 420ms;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ===========================================
+       VIEWPORT FITTING: MANDATORY BASE STYLES
+       Included in full from viewport-base.css.
+       =========================================== */
+
+    /* 1. Lock html/body to viewport */
+    html, body {
+        height: 100%;
+        overflow-x: hidden;
+    }
+
+    html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+    }
+
+    /* 2. Each slide = exact viewport height */
+    .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile browsers */
+        overflow: hidden; /* CRITICAL: Prevent ANY overflow */
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    /* 3. Content container with flex for centering */
+    .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-height: 100%;
+        overflow: hidden; /* Double-protection against overflow */
+        padding: var(--slide-padding);
+    }
+
+    /* 4. ALL typography uses clamp() for responsive scaling */
+    :root {
+        /* Titles scale from mobile to desktop */
+        --title-size: clamp(1.5rem, 5vw, 4rem);
+        --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+        --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+
+        /* Body text */
+        --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+        --small-size: clamp(0.65rem, 1vw, 0.875rem);
+
+        /* Spacing scales with viewport */
+        --slide-padding: clamp(1rem, 4vw, 4rem);
+        --content-gap: clamp(0.5rem, 2vw, 2rem);
+        --element-gap: clamp(0.25rem, 1vw, 1rem);
+    }
+
+    /* 5. Cards/containers use viewport-relative max sizes */
+    .card, .container, .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+    }
+
+    /* 6. Lists auto-scale with viewport */
+    .feature-list, .bullet-list {
+        gap: clamp(0.4rem, 1vh, 1rem);
+    }
+
+    .feature-list li, .bullet-list li {
+        font-size: var(--body-size);
+        line-height: 1.4;
+    }
+
+    /* 7. Grids adapt to available space */
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+    }
+
+    /* 8. Images constrained to viewport */
+    img, .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+    }
+
+    /* ===========================================
+       RESPONSIVE BREAKPOINTS
+       Aggressive scaling for smaller viewports
+       =========================================== */
+
+    /* Short viewports (< 700px height) */
+    @media (max-height: 700px) {
+        :root {
+            --slide-padding: clamp(0.75rem, 3vw, 2rem);
+            --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+            --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+            --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+    }
+
+    /* Very short viewports (< 600px height) */
+    @media (max-height: 600px) {
+        :root {
+            --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+            --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+            --title-size: clamp(1.1rem, 4vw, 2rem);
+            --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+
+        /* Hide non-essential elements */
+        .nav-dots, .keyboard-hint, .decorative {
+            display: none;
+        }
+    }
+
+    /* Extremely short (landscape phones, < 500px height) */
+    @media (max-height: 500px) {
+        :root {
+            --slide-padding: clamp(0.4rem, 2vw, 1rem);
+            --title-size: clamp(1rem, 3.5vw, 1.5rem);
+            --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+            --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+    }
+
+    /* Narrow viewports (< 600px width) */
+    @media (max-width: 600px) {
+        :root {
+            --title-size: clamp(1.25rem, 7vw, 2.5rem);
+        }
+
+        /* Stack grids vertically */
+        .grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ===========================================
+       REDUCED MOTION
+       Respect user preferences
+       =========================================== */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.2s !important;
+        }
+
+        html {
+            scroll-behavior: auto;
+        }
+    }
+
+    /* ===========================================
+       DECK SHELL
+       =========================================== */
+    html, body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    .deck {
+      position: fixed;
+      inset: 0;
+      background: var(--paper);
+    }
+
+    .deck::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+      background-size: clamp(1.75rem, 2.2vw, 2.75rem) clamp(1.75rem, 2.2vw, 2.75rem);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) ease;
+      z-index: 1;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 2;
+    }
+
+    .slide::before,
+    .slide::after {
+      content: "";
+      position: absolute;
+      left: clamp(2.25rem, 3.6vw, 5rem);
+      right: clamp(2.25rem, 3.6vw, 5rem);
+      height: clamp(1px, 0.12vw, 2px);
+      background: var(--ink);
+      z-index: 2;
+    }
+
+    .slide::before { top: clamp(1.75rem, 2.6vh, 3rem); }
+    .slide::after { bottom: clamp(1.25rem, 2vh, 2rem); }
+
+    .frame {
+      position: absolute;
+      inset: clamp(4.5rem, 8vh, 8.125rem) clamp(2.25rem, 3.6vw, 5rem) clamp(5.5rem, 9vh, 8.5rem);
+      z-index: 4;
+      max-height: calc(100vh - clamp(10rem, 18vh, 16rem));
+      overflow: hidden;
+    }
+
+    .page-number {
+      position: absolute;
+      right: clamp(2.25rem, 3.6vw, 5rem);
+      bottom: clamp(3rem, 4.8vh, 4.75rem);
+      font: 500 clamp(0.65rem, 0.82vw, 0.82rem)/1 var(--font-mono);
+      letter-spacing: 0.08em;
+      z-index: 6;
+    }
+
+    .keyboard-hint {
+      position: fixed;
+      left: clamp(2.25rem, 3.6vw, 5rem);
+      bottom: clamp(3rem, 4.8vh, 4.75rem);
+      font: 400 clamp(0.62rem, 0.75vw, 0.75rem)/1 var(--font-mono);
+      letter-spacing: 0.08em;
+      opacity: 0.5;
+      z-index: 10;
+    }
+
+    .section-label,
+    .eyebrow {
+      font: 700 clamp(0.66rem, 0.86vw, 0.88rem)/1.2 var(--font-body);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    h1, h2, h3 {
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    p { color: var(--ink); }
+
+    .display-title {
+      font-size: clamp(3.6rem, min(8vw, 13vh), 9.5rem);
+      line-height: 0.93;
+      letter-spacing: -0.018em;
+    }
+
+    .slide-title {
+      font-size: clamp(2.5rem, min(5vw, 8.5vh), 6rem);
+      line-height: 0.98;
+      letter-spacing: -0.012em;
+    }
+
+    .body-copy {
+      font-size: clamp(0.9rem, 1.12vw, 1.18rem);
+      line-height: 1.55;
+    }
+
+    .mono { font-family: var(--font-mono); }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: clamp(1.5rem, 3vw, 3.5rem);
+      padding-bottom: clamp(0.75rem, 1.4vh, 1.4rem);
+      border-bottom: clamp(1px, 0.12vw, 2px) solid var(--ink);
+    }
+
+    .topbar .slide-title { max-width: 78%; }
+
+    /* ===========================================
+       COBALT SIGNATURE DECORATIONS
+       =========================================== */
+    .pixel-stair {
+      position: absolute;
+      right: clamp(2.25rem, 4vw, 5.5rem);
+      top: clamp(5rem, 9vh, 8rem);
+      width: clamp(13rem, 24vw, 28rem);
+      height: clamp(20rem, 62vh, 42rem);
+      z-index: 2;
+      opacity: 0.72;
+      background:
+        repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px clamp(0.3rem, 0.45vw, 0.55rem));
+      clip-path: polygon(35% 0, 88% 0, 88% 14%, 74% 14%, 74% 28%, 94% 28%, 94% 42%, 64% 42%, 64% 56%, 82% 56%, 82% 70%, 55% 70%, 55% 84%, 72% 84%, 72% 100%, 20% 100%, 20% 86%, 4% 86%, 4% 72%, 28% 72%, 28% 58%, 8% 58%, 8% 44%, 38% 44%, 38% 30%, 16% 30%, 16% 16%, 35% 16%);
+    }
+
+    .qr-mark {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(0.12rem, 0.18vw, 0.2rem);
+      width: clamp(3.5rem, 4.4vw, 5.2rem);
+      aspect-ratio: 1;
+      padding: clamp(0.2rem, 0.3vw, 0.35rem);
+      background: var(--paper);
+      border: clamp(1px, 0.1vw, 2px) solid var(--ink);
+    }
+
+    .qr-mark i {
+      display: block;
+      background: var(--ink);
+    }
+
+    .qr-mark i:nth-child(2n),
+    .qr-mark i:nth-child(7),
+    .qr-mark i:nth-child(13),
+    .qr-mark i:nth-child(19) { background: transparent; }
+
+    /* ===========================================
+       REVEAL MOTION
+       =========================================== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(clamp(0.75rem, 1.6vw, 1.8rem));
+      transition:
+        opacity var(--duration-normal) var(--ease-out-expo),
+        transform var(--duration-normal) var(--ease-out-expo);
+    }
+
+    .active .reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .active .reveal:nth-child(2) { transition-delay: 70ms; }
+    .active .reveal:nth-child(3) { transition-delay: 140ms; }
+    .active .reveal:nth-child(4) { transition-delay: 210ms; }
+
+    /* ===========================================
+       SLIDE 01 — COVER
+       =========================================== */
+    .cover-copy {
+      position: absolute;
+      left: clamp(2.25rem, 3.6vw, 5rem);
+      top: clamp(5rem, 10vh, 10rem);
+      width: min(64vw, 72rem);
+      z-index: 4;
+    }
+
+    .cover-copy .eyebrow { margin-bottom: clamp(1.2rem, 2.4vh, 2.2rem); }
+
+    .cover-copy .subtitle {
+      margin-top: clamp(1.5rem, 2.7vh, 2.8rem);
+      max-width: 46rem;
+      font-size: clamp(1rem, 1.4vw, 1.45rem);
+      line-height: 1.45;
+    }
+
+    .cover-meta {
+      position: absolute;
+      left: clamp(2.25rem, 3.6vw, 5rem);
+      bottom: clamp(5.3rem, 8vh, 7.5rem);
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: clamp(2rem, 4vw, 5rem);
+      z-index: 4;
+      font-size: clamp(0.72rem, 0.88vw, 0.9rem);
+      line-height: 1.45;
+    }
+
+    .cover-meta strong {
+      display: block;
+      margin-bottom: clamp(0.2rem, 0.4vh, 0.4rem);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: clamp(0.62rem, 0.76vw, 0.78rem);
+    }
+
+    .cover-qr {
+      position: absolute;
+      right: clamp(4rem, 9vw, 11rem);
+      top: clamp(4rem, 7vh, 7rem);
+      z-index: 5;
+    }
+
+    /* ===========================================
+       SLIDE 02 — USER PROBLEM
+       =========================================== */
+    .problem-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(22rem, 0.9fr);
+      gap: clamp(2.5rem, 6vw, 7rem);
+      height: 100%;
+      align-items: center;
+    }
+
+    .problem-statement {
+      font-size: clamp(2.4rem, min(4.5vw, 7.2vh), 5.3rem);
+      line-height: 1.04;
+    }
+
+    .problem-list {
+      display: grid;
+      gap: clamp(0.8rem, 1.5vh, 1.4rem);
+      list-style: none;
+      counter-reset: issue;
+    }
+
+    .problem-list li {
+      counter-increment: issue;
+      display: grid;
+      grid-template-columns: clamp(2rem, 2.8vw, 3rem) 1fr;
+      gap: clamp(0.6rem, 1vw, 1rem);
+      padding-bottom: clamp(0.6rem, 1vh, 1rem);
+      border-bottom: 1px solid var(--rule-soft);
+      font-size: clamp(0.88rem, 1.06vw, 1.1rem);
+      line-height: 1.42;
+    }
+
+    .problem-list li::before {
+      content: "0" counter(issue);
+      font: 500 clamp(0.72rem, 0.86vw, 0.88rem)/1.4 var(--font-mono);
+    }
+
+    /* ===========================================
+       SLIDE 03 — PRODUCT VALUE
+       =========================================== */
+    .thesis-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(3rem, 7vw, 8rem);
+      height: 100%;
+      align-items: center;
+    }
+
+    .thesis-quote {
+      font-size: clamp(2.2rem, min(4vw, 6.5vh), 4.8rem);
+      line-height: 1.07;
+      padding-top: clamp(1rem, 2vh, 2rem);
+      border-top: clamp(1px, 0.12vw, 2px) solid var(--ink);
+    }
+
+    .value-list {
+      display: grid;
+      gap: clamp(0.9rem, 1.6vh, 1.5rem);
+    }
+
+    .value-item {
+      display: grid;
+      grid-template-columns: clamp(2rem, 3vw, 3.2rem) 1fr;
+      gap: clamp(0.8rem, 1.2vw, 1.25rem);
+      align-items: start;
+      padding-bottom: clamp(0.7rem, 1.1vh, 1rem);
+      border-bottom: 1px solid var(--rule-soft);
+    }
+
+    .value-item b {
+      font: 500 clamp(1.4rem, 2vw, 2.2rem)/1 var(--font-display);
+      font-style: italic;
+    }
+
+    .value-item p {
+      font-size: clamp(0.88rem, 1.03vw, 1.08rem);
+      line-height: 1.5;
+    }
+
+    /* ===========================================
+       SLIDE 04 — FEATURE CHAIN
+       =========================================== */
+    .chain {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(2rem, 4.5vw, 5rem);
+      margin-top: clamp(3rem, 7vh, 6rem);
+      position: relative;
+    }
+
+    .chain::before {
+      content: "";
+      position: absolute;
+      left: 11%;
+      right: 11%;
+      top: clamp(2.4rem, 5.5vh, 4rem);
+      height: clamp(1px, 0.12vw, 2px);
+      background: var(--ink);
+      z-index: 0;
+    }
+
+    .chain-step {
+      position: relative;
+      z-index: 1;
+      background: var(--paper);
+      min-height: clamp(15rem, 38vh, 24rem);
+      border-top: clamp(0.32rem, 0.55vw, 0.6rem) solid var(--ink);
+      padding: clamp(1.1rem, 2vw, 2rem) clamp(0.8rem, 1.3vw, 1.3rem);
+    }
+
+    .chain-step .num {
+      font: 500 clamp(0.72rem, 0.86vw, 0.88rem)/1 var(--font-mono);
+      letter-spacing: 0.08em;
+    }
+
+    .chain-step h3 {
+      margin-top: clamp(1.4rem, 3vh, 2.6rem);
+      font-size: clamp(1.8rem, 2.6vw, 3.1rem);
+      line-height: 1.02;
+    }
+
+    .chain-step p {
+      margin-top: clamp(0.8rem, 1.5vh, 1.3rem);
+      font-size: clamp(0.84rem, 1vw, 1.06rem);
+      line-height: 1.5;
+    }
+
+    /* ===========================================
+       SLIDE 05 — PHASE 1
+       =========================================== */
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: center;
+      gap: clamp(0.5rem, 1vw, 1rem);
+      margin-top: clamp(2.2rem, 5vh, 4rem);
+    }
+
+    .journey-node {
+      min-height: clamp(7rem, 17vh, 11rem);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: clamp(0.8rem, 1.4vw, 1.4rem);
+      border: clamp(1px, 0.12vw, 2px) solid var(--ink);
+      background: rgba(240, 235, 222, 0.82);
+      font-size: clamp(0.82rem, 1vw, 1.04rem);
+      line-height: 1.4;
+    }
+
+    .journey-arrow {
+      display: none;
+    }
+
+    .scope-strip {
+      margin-top: clamp(1.7rem, 3.4vh, 3rem);
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(0.45rem, 0.7vw, 0.75rem);
+    }
+
+    .scope-strip span {
+      padding: clamp(0.42rem, 0.7vw, 0.65rem) clamp(0.72rem, 1.1vw, 1.1rem);
+      border: 1px solid var(--ink);
+      font: 600 clamp(0.66rem, 0.82vw, 0.84rem)/1 var(--font-body);
+      letter-spacing: 0.05em;
+      background: var(--paper);
+    }
+
+    /* ===========================================
+       SLIDE 06 — FUTURE TENSOR / MEMORY
+       =========================================== */
+    .future-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: clamp(3rem, 6vw, 7rem);
+      align-items: center;
+      height: 100%;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: clamp(1px, 0.14vw, 3px);
+      aspect-ratio: 1;
+      width: min(34vw, 54vh);
+      padding: clamp(0.45rem, 0.8vw, 0.8rem);
+      border: clamp(1px, 0.12vw, 2px) solid var(--ink);
+      background: var(--paper);
+    }
+
+    .matrix i {
+      display: block;
+      background: rgba(31, 43, 224, 0.1);
+    }
+
+    .matrix i:nth-child(3n),
+    .matrix i:nth-child(7n),
+    .matrix i:nth-child(11n) { background: var(--ink); }
+
+    .future-copy h2 {
+      font-size: clamp(2.5rem, min(4.6vw, 7.5vh), 5.5rem);
+      line-height: 0.98;
+    }
+
+    .future-copy ul {
+      list-style: none;
+      margin-top: clamp(1.5rem, 3vh, 2.8rem);
+      display: grid;
+      gap: clamp(0.75rem, 1.3vh, 1.2rem);
+    }
+
+    .future-copy li {
+      padding-bottom: clamp(0.55rem, 0.9vh, 0.9rem);
+      border-bottom: 1px solid var(--rule-soft);
+      font-size: clamp(0.85rem, 1vw, 1.06rem);
+      line-height: 1.45;
+    }
+
+    .future-note {
+      margin-top: clamp(1rem, 2vh, 1.8rem);
+      font: 500 clamp(0.7rem, 0.86vw, 0.9rem)/1.45 var(--font-mono);
+    }
+
+    /* ===========================================
+       SLIDE 07 — BOUNDARIES
+       =========================================== */
+    .boundary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(1rem, 2.2vw, 2.2rem) clamp(2.5rem, 5vw, 5.5rem);
+      margin-top: clamp(2rem, 4vh, 3.5rem);
+    }
+
+    .boundary {
+      display: grid;
+      grid-template-columns: clamp(2.4rem, 3vw, 3.2rem) 1fr;
+      gap: clamp(0.8rem, 1.3vw, 1.3rem);
+      padding-bottom: clamp(0.8rem, 1.4vh, 1.4rem);
+      border-bottom: 1px solid var(--rule-soft);
+    }
+
+    .boundary .mark {
+      font: 500 clamp(1.7rem, 2.5vw, 2.8rem)/1 var(--font-display);
+      font-style: italic;
+    }
+
+    .boundary h3 {
+      font-family: var(--font-body);
+      font-style: normal;
+      font-weight: 700;
+      font-size: clamp(0.9rem, 1.05vw, 1.1rem);
+      margin-bottom: clamp(0.25rem, 0.5vh, 0.5rem);
+    }
+
+    .boundary p {
+      font-size: clamp(0.75rem, 0.9vw, 0.95rem);
+      line-height: 1.45;
+    }
+
+    /* ===========================================
+       SLIDE 08 — PATTERN
+       =========================================== */
+    .pattern-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: clamp(2.5rem, 5vw, 5.5rem);
+      margin-top: clamp(1.5rem, 3vh, 2.6rem);
+      height: calc(100% - clamp(5rem, 10vh, 8rem));
+    }
+
+    .semantic-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(0.6rem, 1.1vw, 1rem);
+      align-content: start;
+    }
+
+    .semantic {
+      min-height: clamp(5rem, 10vh, 7rem);
+      border-top: clamp(0.22rem, 0.36vw, 0.4rem) solid var(--ink);
+      padding: clamp(0.7rem, 1vw, 1rem) 0;
+    }
+
+    .semantic b {
+      display: block;
+      margin-bottom: clamp(0.3rem, 0.6vh, 0.55rem);
+      font-size: clamp(0.72rem, 0.86vw, 0.9rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .semantic span {
+      font-size: clamp(0.72rem, 0.88vw, 0.92rem);
+      line-height: 1.4;
+    }
+
+    .flow-board {
+      display: grid;
+      grid-template-columns: clamp(5rem, 7vw, 7rem) 1fr;
+      gap: clamp(0.7rem, 1vw, 1rem);
+      align-content: center;
+    }
+
+    .lane-label {
+      display: grid;
+      place-items: center end;
+      padding-right: clamp(0.4rem, 0.8vw, 0.8rem);
+      font: 600 clamp(0.66rem, 0.78vw, 0.82rem)/1 var(--font-mono);
+    }
+
+    .lane {
+      min-height: clamp(3.2rem, 7vh, 4.8rem);
+      display: flex;
+      align-items: center;
+      gap: clamp(0.45rem, 0.8vw, 0.8rem);
+      border-bottom: 1px solid var(--rule-soft);
+    }
+
+    .instruction {
+      padding: clamp(0.55rem, 0.9vw, 0.9rem);
+      border: 1px solid var(--ink);
+      background: var(--paper);
+      font: 500 clamp(0.64rem, 0.75vw, 0.78rem)/1.25 var(--font-mono);
+      white-space: nowrap;
+    }
+
+    .instruction.event {
+      border-style: dashed;
+      background: rgba(31, 43, 224, 0.06);
+    }
+
+    .connector {
+      flex: 1;
+      min-width: clamp(0.8rem, 1.5vw, 1.5rem);
+      height: 1px;
+      background: var(--ink);
+    }
+
+    /* ===========================================
+       SLIDE 09 — AI + ACCEPTANCE
+       =========================================== */
+    .closing-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: clamp(3rem, 6vw, 7rem);
+      align-items: center;
+      height: 100%;
+    }
+
+    .recognition-chain {
+      display: grid;
+      gap: clamp(0.7rem, 1.2vh, 1.1rem);
+      margin-top: clamp(1.4rem, 2.5vh, 2.2rem);
+    }
+
+    .recognition-row {
+      display: grid;
+      grid-template-columns: clamp(7.5rem, 10vw, 10.5rem) 1fr;
+      gap: clamp(0.8rem, 1.2vw, 1.2rem);
+      align-items: center;
+      padding-bottom: clamp(0.6rem, 1vh, 0.9rem);
+      border-bottom: 1px solid var(--rule-soft);
+    }
+
+    .recognition-row b {
+      font: 600 clamp(0.68rem, 0.82vw, 0.86rem)/1 var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .recognition-row p {
+      font-size: clamp(0.78rem, 0.92vw, 0.98rem);
+      line-height: 1.4;
+    }
+
+    .acceptance {
+      border-left: clamp(0.35rem, 0.55vw, 0.6rem) solid var(--ink);
+      padding-left: clamp(1.4rem, 2.5vw, 2.5rem);
+    }
+
+    .acceptance h2 {
+      font-size: clamp(2.4rem, min(4.2vw, 7vh), 5rem);
+      line-height: 0.98;
+    }
+
+    .acceptance ul {
+      margin-top: clamp(1.4rem, 2.5vh, 2.2rem);
+      list-style: none;
+      display: grid;
+      gap: clamp(0.55rem, 1vh, 0.9rem);
+    }
+
+    .acceptance li {
+      font-size: clamp(0.8rem, 0.95vw, 1rem);
+      line-height: 1.4;
+    }
+
+    .acceptance li::before {
+      content: "→";
+      margin-right: clamp(0.5rem, 0.8vw, 0.8rem);
+      font-family: var(--font-mono);
+    }
+
+    /* ===========================================
+       PRESENTATION CONTROLS
+       =========================================== */
+    .progress {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: clamp(0.15rem, 0.3vh, 0.25rem);
+      width: 0;
+      background: var(--ink);
+      transition: width 260ms ease;
+      z-index: 30;
+    }
+
+    .nav-dots {
+      position: fixed;
+      right: clamp(0.8rem, 1.4vw, 1.4rem);
+      top: 50%;
+      transform: translateY(-50%);
+      display: grid;
+      gap: clamp(0.4rem, 0.7vh, 0.65rem);
+      z-index: 30;
+    }
+
+    .nav-dot {
+      width: clamp(0.42rem, 0.55vw, 0.58rem);
+      aspect-ratio: 1;
+      border: 1px solid var(--ink);
+      background: var(--paper);
+      cursor: pointer;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .nav-dot.active {
+      background: var(--ink);
+      transform: scale(1.35);
+    }
+
+    .fullscreen {
+      position: fixed;
+      top: clamp(2.7rem, 4.2vh, 4rem);
+      right: clamp(2.25rem, 3.6vw, 5rem);
+      border: 1px solid var(--ink);
+      color: var(--ink);
+      background: rgba(240, 235, 222, 0.88);
+      padding: clamp(0.4rem, 0.7vw, 0.65rem) clamp(0.65rem, 1vw, 0.95rem);
+      font: 600 clamp(0.62rem, 0.74vw, 0.76rem)/1 var(--font-mono);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      z-index: 30;
+    }
+
+    @media (max-width: 900px) {
+      .problem-layout,
+      .thesis-layout,
+      .future-grid,
+      .pattern-layout,
+      .closing-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .pixel-stair { opacity: 0.28; }
+      .matrix { width: min(52vw, 40vh); }
+    }
+  </style>
+</head>
+<body>
+  <!-- === DECK PROGRESS + NAVIGATION === -->
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <nav class="nav-dots" id="navDots" aria-label="幻灯片导航"></nav>
+  <button class="fullscreen" id="fullscreenBtn" type="button" aria-label="切换全屏">FULLSCREEN</button>
+  <div class="keyboard-hint">← / → · SPACE · HOME / END</div>
+
+  <!-- === SLIDE DECK === -->
+  <main class="deck" id="deck">
+    <!-- 01 · COVER -->
+    <section class="slide active" id="slide-01" aria-label="封面">
+      <div class="pixel-stair decorative" aria-hidden="true"></div>
+      <div class="qr-mark cover-qr decorative" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="cover-copy">
+        <div class="eyebrow reveal">Ascend C · 产品能力内部沟通</div>
+        <h1 class="display-title reveal">Source-to-<br>Instruction Flow</h1>
+        <p class="subtitle reveal">从源码标记进入执行语义，让用户看见指令顺序、依赖与硬件参与。</p>
+      </div>
+      <div class="cover-meta reveal">
+        <div><strong>首期</strong>Instruction Flow × Hardware</div>
+        <div><strong>后续</strong>Tensor × Memory × Data Dump</div>
+        <div><strong>案例</strong>Conv + Bias + ReLU</div>
+      </div>
+      <div class="page-number">01 / 09</div>
+    </section>
+
+    <!-- 02 · USER PROBLEM -->
+    <section class="slide" id="slide-02" aria-label="用户问题">
+      <div class="frame problem-layout">
+        <div>
+          <div class="section-label reveal">01 · 用户问题</div>
+          <h2 class="problem-statement reveal">源码展示 API，<br>执行过程仍留在<br>开发者脑中。</h2>
+        </div>
+        <ol class="problem-list reveal">
+          <li>指令按什么顺序执行？</li>
+          <li>哪些代码属于搬运、计算或同步？</li>
+          <li>由哪个硬件单元执行？</li>
+          <li>循环、分支和依赖如何连接？</li>
+        </ol>
+      </div>
+      <div class="page-number">02 / 09</div>
+    </section>
+
+    <!-- 03 · PRODUCT THESIS + VALUE -->
+    <section class="slide" id="slide-03" aria-label="产品价值">
+      <div class="frame thesis-layout">
+        <div>
+          <div class="section-label reveal">02 · 产品主张</div>
+          <h2 class="thesis-quote reveal">把分散的 API 调用，恢复为可阅读、可回到源码的执行过程。</h2>
+        </div>
+        <div class="value-list reveal">
+          <div class="value-item"><b>01</b><p>从“识别 API”推进到“理解执行过程”。</p></div>
+          <div class="value-item"><b>02</b><p>连接源码、Instruction 与硬件 mental model。</p></div>
+          <div class="value-item"><b>03</b><p>缩短现象到代码与执行环节的定位路径。</p></div>
+          <div class="value-item"><b>04</b><p>为 Tensor、Memory、Event 与 Profiling 提供统一入口。</p></div>
+        </div>
+      </div>
+      <div class="page-number">03 / 09</div>
+    </section>
+
+    <!-- 04 · FEATURE DEFINITION -->
+    <section class="slide" id="slide-04" aria-label="特性定义">
+      <div class="frame">
+        <div class="topbar reveal">
+          <h2 class="slide-title">三个连续能力，形成一条理解链路。</h2>
+          <div class="section-label">03 · 特性定义</div>
+        </div>
+        <div class="chain">
+          <article class="chain-step reveal">
+            <div class="num">01 / SOURCE</div>
+            <h3>源码标记</h3>
+            <p>定位当前解释对应的 Host 或 Kernel 代码。</p>
+          </article>
+          <article class="chain-step reveal">
+            <div class="num">02 / RECOVERY</div>
+            <h3>Instruction Recovery</h3>
+            <p>识别 Move、Compute、Sync 等执行语义。</p>
+          </article>
+          <article class="chain-step reveal">
+            <div class="num">03 / FLOW</div>
+            <h3>Flow Visualization</h3>
+            <p>展示顺序、循环、分支、依赖与硬件参与。</p>
+          </article>
+        </div>
+      </div>
+      <div class="page-number">04 / 09</div>
+    </section>
+
+    <!-- 05 · PHASE 1 -->
+    <section class="slide" id="slide-05" aria-label="阶段一">
+      <div class="frame">
+        <div class="topbar reveal">
+          <h2 class="slide-title">阶段 1：Instruction Flow × Hardware</h2>
+          <div class="section-label">04 · 首期闭环</div>
+        </div>
+        <div class="journey reveal">
+          <div class="journey-node">选中源码</div>
+          <div class="journey-node">定位<br>Instruction</div>
+          <div class="journey-node">查看前后<br>执行关系</div>
+          <div class="journey-node">查看参与的<br>硬件单元</div>
+          <div class="journey-node">返回源码<br>继续阅读</div>
+        </div>
+        <div class="scope-strip reveal">
+          <span>Source ↔ Instruction</span>
+          <span>Sequence / Loop / Branch</span>
+          <span>Data / Event / Control</span>
+          <span>MTE / Cube / Vector / Fixpipe</span>
+          <span>Recognized / Inferred / Unknown</span>
+        </div>
+      </div>
+      <div class="page-number">05 / 09</div>
+    </section>
+
+    <!-- 06 · FUTURE TENSOR + MEMORY -->
+    <section class="slide" id="slide-06" aria-label="后续阶段">
+      <div class="frame future-grid">
+        <div class="matrix reveal" aria-label="16乘16矩阵示意">
+          <!-- 256 cells are generated by JavaScript to keep markup concise. -->
+        </div>
+        <div class="future-copy">
+          <div class="section-label reveal">05 · 后续能力</div>
+          <h2 class="reveal">Tensor × Memory<br>× Data Dump</h2>
+          <ul class="reveal">
+            <li>Tensor 的产生、有效、消费与复用</li>
+            <li>GM、L1、L0、UB 等存储位置与搬运路径</li>
+            <li>具体 Tile（如 16×16）包含的实际矩阵数据</li>
+            <li>Instruction、Tensor、Memory、Hardware 的统一上下文</li>
+          </ul>
+          <p class="future-note reveal">实际数值只来自 Data Dump 或明确的运行数据；无数据时不生成、不猜测。</p>
+        </div>
+      </div>
+      <div class="page-number">06 / 09</div>
+    </section>
+
+    <!-- 07 · BOUNDARIES -->
+    <section class="slide" id="slide-07" aria-label="能力边界">
+      <div class="frame">
+        <div class="topbar reveal">
+          <h2 class="slide-title">解释执行，但不伪造运行事实。</h2>
+          <div class="section-label">06 · 能力边界</div>
+        </div>
+        <div class="boundary-grid">
+          <article class="boundary reveal"><div class="mark">01</div><div><h3>逻辑顺序 ≠ 真实时间</h3><p>节点宽度不表示 duration、stall 或 overlap。</p></div></article>
+          <article class="boundary reveal"><div class="mark">02</div><div><h3>静态路径 ≠ 实际路径</h3><p>源码不能证明某次运行走过哪条分支。</p></div></article>
+          <article class="boundary reveal"><div class="mark">03</div><div><h3>不承诺理解任意代码</h3><p>无法确认的内容保留为 Unknown / Source-only。</p></div></article>
+          <article class="boundary reveal"><div class="mark">04</div><div><h3>AI 推断必须可见</h3><p>Inferred 不作为编译或运行事实。</p></div></article>
+          <article class="boundary reveal"><div class="mark">05</div><div><h3>实际数据需要 Dump</h3><p>Tensor 数值不能由源码静态推测。</p></div></article>
+          <article class="boundary reveal"><div class="mark">06</div><div><h3>真实观测需要运行证据</h3><p>耗时与等待来自仿真或 Profiling。</p></div></article>
+        </div>
+      </div>
+      <div class="page-number">07 / 09</div>
+    </section>
+
+    <!-- 08 · UNIVERSAL PATTERN -->
+    <section class="slide" id="slide-08" aria-label="通用Pattern">
+      <div class="frame">
+        <div class="topbar reveal">
+          <h2 class="slide-title">统一语义，允许不同算子生成不同形状。</h2>
+          <div class="section-label">07 · 通用 Pattern</div>
+        </div>
+        <div class="pattern-layout">
+          <div class="semantic-list reveal">
+            <div class="semantic"><b>Instruction</b><span>DataCopy · Mmad · Fixpipe</span></div>
+            <div class="semantic"><b>Execution role</b><span>Host · MTE · Cube · Event</span></div>
+            <div class="semantic"><b>Action type</b><span>Move · Compute · Sync · Store</span></div>
+            <div class="semantic"><b>Structure</b><span>Sequence · Loop · Branch</span></div>
+            <div class="semantic"><b>Dependency</b><span>Data · Event · Control</span></div>
+            <div class="semantic"><b>Recognition</b><span>Recognized · Inferred · Unknown</span></div>
+          </div>
+          <div class="flow-board reveal" aria-label="Instruction Flow 泳道示意">
+            <div class="lane-label">MTE</div>
+            <div class="lane"><span class="instruction">DataCopy</span><span class="connector"></span><span class="instruction">LoadData</span></div>
+            <div class="lane-label">EVENT</div>
+            <div class="lane"><span class="instruction event">SetFlag</span><span class="connector"></span><span class="instruction event">WaitFlag</span></div>
+            <div class="lane-label">CUBE</div>
+            <div class="lane"><span class="instruction">Mmad × N</span><span class="connector"></span><span class="instruction">Accumulate</span></div>
+            <div class="lane-label">FIXPIPE</div>
+            <div class="lane"><span class="instruction">Transform</span><span class="connector"></span><span class="instruction">Store GM</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="page-number">08 / 09</div>
+    </section>
+
+    <!-- 09 · RECOGNITION + ACCEPTANCE -->
+    <section class="slide" id="slide-09" aria-label="识别与验收">
+      <div class="pixel-stair decorative" aria-hidden="true"></div>
+      <div class="frame closing-layout">
+        <div>
+          <div class="section-label reveal">08 · 识别机制</div>
+          <h2 class="slide-title reveal">确定性优先，AI 只扩展覆盖率。</h2>
+          <div class="recognition-chain reveal">
+            <div class="recognition-row"><b>Recognized</b><p>源码、Compiler/IR 或 API Registry 支持</p></div>
+            <div class="recognition-row"><b>Inferred</b><p>AI 提供候选解释，并保留依据</p></div>
+            <div class="recognition-row"><b>Unknown</b><p>证据不足，只显示源码位置</p></div>
+          </div>
+        </div>
+        <div class="acceptance reveal">
+          <h2>阶段 1<br>做到什么算完成？</h2>
+          <ul>
+            <li>源码与 Instruction 双向定位</li>
+            <li>看懂主要顺序、循环与依赖</li>
+            <li>识别当前参与的硬件单元</li>
+            <li>Unknown 不被隐藏或包装成事实</li>
+            <li>不依赖 Tensor / Memory 也能形成基本理解</li>
+          </ul>
+        </div>
+      </div>
+      <div class="page-number">09 / 09</div>
+    </section>
+  </main>
+
+  <script>
+    /* ===========================================
+       DECORATIVE MATRIX GENERATOR
+       =========================================== */
+    const matrix = document.querySelector('.matrix');
+    for (let i = 0; i < 256; i += 1) {
+      matrix.appendChild(document.createElement('i'));
+    }
+
+    /* ===========================================
+       SLIDE PRESENTATION CONTROLLER
+       Keyboard, wheel, dots, progress and fullscreen.
+       =========================================== */
+    class SlidePresentation {
+      constructor() {
+        this.slides = Array.from(document.querySelectorAll('#deck > .slide'));
+        this.current = 0;
+        this.wheelLock = false;
+        this.progress = document.getElementById('progress');
+        this.navDots = document.getElementById('navDots');
+        this.fullscreenBtn = document.getElementById('fullscreenBtn');
+        this.buildDots();
+        this.bindKeyboard();
+        this.bindWheel();
+        this.bindFullscreen();
+        this.show(0);
+      }
+
+      buildDots() {
+        this.slides.forEach((slide, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'nav-dot';
+          button.setAttribute('aria-label', `前往第 ${index + 1} 页`);
+          button.addEventListener('click', () => this.show(index));
+          this.navDots.appendChild(button);
+        });
+      }
+
+      show(index) {
+        const next = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides[this.current]?.classList.remove('active');
+        this.slides[next].classList.add('active');
+        this.current = next;
+        Array.from(this.navDots.children).forEach((dot, i) => {
+          dot.classList.toggle('active', i === next);
+          dot.setAttribute('aria-current', i === next ? 'true' : 'false');
+        });
+        this.progress.style.width = `${((next + 1) / this.slides.length) * 100}%`;
+        document.title = `Source-to-Instruction Flow · ${next + 1}/${this.slides.length}`;
+      }
+
+      bindKeyboard() {
+        document.addEventListener('keydown', (event) => {
+          if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) {
+            event.preventDefault();
+            this.show(this.current + 1);
+          } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) {
+            event.preventDefault();
+            this.show(this.current - 1);
+          } else if (event.key === 'Home') {
+            event.preventDefault();
+            this.show(0);
+          } else if (event.key === 'End') {
+            event.preventDefault();
+            this.show(this.slides.length - 1);
+          }
+        });
+      }
+
+      bindWheel() {
+        document.addEventListener('wheel', (event) => {
+          if (this.wheelLock || Math.abs(event.deltaY) < 12) return;
+          this.wheelLock = true;
+          this.show(this.current + (event.deltaY > 0 ? 1 : -1));
+          window.setTimeout(() => { this.wheelLock = false; }, 520);
+        }, { passive: true });
+      }
+
+      bindFullscreen() {
+        this.fullscreenBtn.addEventListener('click', async () => {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen?.();
+          } else {
+            await document.exitFullscreen?.();
+          }
+        });
+        document.addEventListener('fullscreenchange', () => {
+          this.fullscreenBtn.textContent = document.fullscreenElement ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+        });
+      }
+    }
+
+    new SlidePresentation();
+  </script>
+</body>
+</html>
